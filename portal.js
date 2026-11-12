@@ -271,7 +271,7 @@
    $('usersBody').innerHTML=state.profiles.map(p=>{
      const self=p.id===state.user.id;
      const options=Object.keys(roles).map(role=>'<option value="'+role+'" '+(p.role===role?'selected':'')+'>'+roles[role]+'</option>').join('');
-     return '<tr><td><strong>'+esc(p.display_name)+'</strong>'+ (self?' <span class="pill ok">自己</span>':'')+'<br><small class="muted">'+esc(p.id.slice(0,8))+'…</small></td><td><select data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td><td><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'></td><td><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button></td></tr>';
+     return '<tr><td><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><small class="muted">'+esc(p.id.slice(0,8))+'…</small>'+(self?' <span class="pill ok">自己</span>':'')+'</td><td><select data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td><td><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'></td><td><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button></td></tr>';
    }).join('')||'<tr><td colspan="4">尚無帳號</td></tr>';
  }
  async function saveProfileFromRow(e){
@@ -280,9 +280,11 @@
    if(id===state.user.id){notify('不能停用或變更自己的管理員權限',true);return}
    const role=$('usersBody').querySelector('select[data-role="'+id+'"]')?.value;
    const active=$('usersBody').querySelector('input[data-active="'+id+'"]')?.checked;
+   const display_name=$('usersBody').querySelector('input[data-display-name="'+id+'"]')?.value?.trim();
+   if(!display_name){notify('請先填寫員工姓名再儲存',true);return}
    b.disabled=true;
    try{
-     await checkQuery(await state.db.from('profiles').update({role,active}).eq('id',id),'儲存帳號權限');
+     await checkQuery(await state.db.from('profiles').update({role,active,display_name}).eq('id',id),'儲存帳號權限');
      await loadAdmin();notify('已更新帳號角色及啟用狀態');
    }catch(err){notify(errText(err),true)}finally{b.disabled=false}
  }
