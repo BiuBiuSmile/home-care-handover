@@ -195,6 +195,7 @@ revoke execute on function public.mark_case_read(text) from public, anon, authen
 grant execute on function public.is_active(), public.is_admin(), public.can_access_case(text), public.mark_case_read(text) to authenticated;
 
 -- ONE-TIME FIRST ADMIN BOOTSTRAP (run manually in SQL editor after signing up).
--- Replace the email below with your own account. Do NOT use this in browser JS.
+-- Replace the phone with your own verified +886 number. NEVER put this in browser JS.
 -- update public.profiles set role='admin', active=true
--- where id = (select id from auth.users where email = 'YOUR_EMAIL@example.com');
+-- where id = (select id from auth.users
+--             where phone = '+886912345678' and phone_confirmed_at is not null);
