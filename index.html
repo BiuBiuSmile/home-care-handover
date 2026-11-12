@@ -43,25 +43,23 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <section class="auth-shell" id="authScreen">
  <div class="auth-card">
   <div class="brand"><span class="logo">護</span> 安護交班</div>
-  <h1 id="authTitle">員工登入</h1>
-  <p class="help">居服員、督導、管理員使用各自的帳號。個案資料會依角色與指派權限顯示。</p>
+  <h1 id="authTitle">手機驗證登入</h1>
+  <p class="help">只要輸入手機號碼，即可接收一次性簡訊驗證碼，無需電子信箱或密碼。首次驗證後仍須管理員核准。</p>
   <div id="configMessage" class="msg error" hidden>尚未設定 Supabase。管理員須先建立資料庫並填寫 config.js，才能啟用正式登入。<a href="demo.html">可先查看示範版</a>。</div>
   <form id="authForm">
-   <div class="field" id="nameField" hidden><label for="displayName">顯示姓名</label><input id="displayName" maxlength="80" autocomplete="name"></div>
    <div class="field"><label for="phone">手機門號（台灣）</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="例如 0912345678" maxlength="20" required></div>
-   <div class="field"><label for="password">密碼（至少 8 字元）</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div>
-   <div class="auth-actions"><button class="btn" type="submit" id="authSubmit">登入</button><button class="btn alt" type="button" id="authSwitch">申請新帳號</button></div>
+   <div class="auth-actions"><button class="btn" style="width:100%" type="submit" id="authSubmit">傳送簡訊驗證碼</button></div>
   </form>
   <form id="verifyForm" hidden>
   <h2 style="font-size:21px;margin:18px 0 5px">驗證手機門號</h2>
-  <p class="help" id="verifyHint">首次申請需要輸入簡訊驗證碼。完成門號驗證後，還需要管理員核准帳號。</p>
+  <p class="help" id="verifyHint">請輸入收到的簡訊驗證碼。首次使用需待管理員核准。</p>
   <div class="field"><label for="smsCode">簡訊驗證碼</label><input id="smsCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]{4,8}" placeholder="輸入簡訊中的數字" required></div>
   <div class="auth-actions"><button class="btn" type="submit" id="verifySubmit">驗證門號</button><button class="btn alt" type="button" id="verifyBack">返回登入</button></div>
   <button class="btn alt" type="button" id="resendSms" style="margin-top:12px;width:100%">重新發送驗證碼</button>
   <p class="help">驗證碼有時效，重新發送須遵守簡訊服務的發送限制。請勿將驗證碼告訴其他人。</p>
  </form>
  <div id="authMessage" role="status" aria-live="polite"></div>
-  <p class="help">以手機門號及密碼登入，不需要電子信箱。首次註冊需完成簡訊驗證；新帳號預設待管理員審核。</p>
+  <p class="help">每次重新登入使用簡訊驗證碼，不須設定或輸入密碼；首次加入需經管理員審核，才能讀取指派個案。</p>
   <p><a href="demo.html">返回不含真實資料的互動示範版</a></p>
  </div>
 </section>
