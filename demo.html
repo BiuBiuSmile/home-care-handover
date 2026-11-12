@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>安護交班｜居家服務交班平台・互動原型</title>
+<style>
+:root{--navy:#132c42;--navy2:#203b53;--teal:#0a8b81;--mint:#e6f5f1;--bg:#f5f8f9;--ink:#213442;--muted:#71828e;--line:#e2ebec;--white:#fff;--yellow:#b77a10;--red:#c5524d;--shadow:0 10px 32px rgba(25,62,75,.06)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,'Noto Sans TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--ink)}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}a{color:inherit}.app{display:flex;min-height:100vh}.sidebar{width:248px;flex:0 0 248px;background:var(--navy);color:#d4e4ed;padding:29px 19px 22px;display:flex;flex-direction:column;gap:24px}.brand{display:flex;align-items:center;gap:12px;padding:0 10px}.mark{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#16a295;color:white;font-size:21px;font-weight:900}.brand h1{margin:0;font-size:18px;color:white;letter-spacing:1px}.brand small{font-size:11px;color:#9fbbc8}.navtitle{font-size:11px;letter-spacing:2px;color:#7fa1b4;padding:0 13px;margin:18px 0 8px}.nav{display:flex;flex-direction:column;gap:7px}.nav button{color:#b7ced8;border:none;border-radius:11px;text-align:left;padding:13px 14px;background:transparent;display:flex;align-items:center;gap:13px;font-size:14px}.nav button.active,.nav button:hover{background:#25485a;color:white}.nav-icon{font-size:17px}.sidebar-bottom{margin-top:auto;padding:18px 12px;border:1px solid #395166;border-radius:14px;font-size:12px;line-height:1.8;color:#b9cbd5}.sidebar-bottom strong{display:block;color:#c8f4eb;font-size:13px}.main{flex:1;min-width:0}.topbar{height:84px;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:0 36px;background:white;border-bottom:1px solid var(--line)}.headline{font-size:22px;font-weight:800;color:var(--navy)}.subheadline{font-size:12px;color:#8b9da6;margin-top:4px}.account{display:flex;align-items:center;gap:11px}.account label{font-size:12px;color:#768b96}.account select{border:1px solid var(--line);color:var(--ink);padding:10px 13px;border-radius:11px;max-width:150px;background:white;font-weight:600}.avatar{width:39px;height:39px;border-radius:12px;background:#e9f4f1;color:var(--teal);display:grid;place-items:center;font-weight:800}.content{padding:27px 34px 55px;max-width:1480px;margin:0 auto}.notice{display:flex;gap:12px;align-items:flex-start;background:#fff9ed;border:1px solid #f3e4bd;border-radius:12px;padding:13px 17px;color:#84672f;font-size:12.5px;line-height:1.7;margin-bottom:20px}.notice b{font-size:16px}.kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-bottom:22px}.kpi-card{background:white;border:1px solid var(--line);padding:19px 22px;border-radius:16px;box-shadow:var(--shadow)}.kpi-caption{font-size:13px;color:var(--muted)}.kpi-number{font-size:29px;font-weight:850;color:var(--navy);margin-top:6px}.kpi-card.accent .kpi-number{color:var(--teal)}.workspace{display:grid;grid-template-columns:minmax(255px,320px) minmax(0,1fr);gap:20px;align-items:start}.panel{background:white;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.case-panel{padding:19px 14px;min-height:580px;position:sticky;top:18px}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:0 8px 16px}.panel-heading h2{font-size:16px;margin:0;color:var(--navy)}.micro{font-size:12px;color:var(--muted)}.search{width:calc(100% - 16px);margin:0 8px 14px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;outline-color:var(--teal);background:#f9fbfc;font-size:13px}.filter-group{display:flex;gap:7px;flex-wrap:wrap;margin:0 8px 13px}.pill{border:1px solid #dce8e9;background:#fff;color:#6c7f89;border-radius:99px;padding:6px 11px;font-size:12px}.pill.active{background:#e8f7f3;border-color:#bde2d8;color:#08756b;font-weight:750}.cases{display:flex;flex-direction:column;gap:7px}.case{padding:14px;border:1px solid transparent;border-radius:13px;background:transparent;text-align:left;width:100%}.case:hover{background:#f6f9fa}.case.active{background:#ebf7f4;border-color:#c7e9e1}.case-title{display:flex;align-items:center;justify-content:space-between;font-weight:750;font-size:14px}.case-meta{font-size:12px;color:#7c919d;margin-top:8px;line-height:1.6}.badge{font-size:11px;padding:3px 8px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}.badge.unread{color:#a96f14;background:#fff1d6}.badge.read{color:#168778;background:#e1f5ef}.badge.risk{color:#ad4945;background:#fff0ef}.badge.neutral{color:#667e8e;background:#edf2f5}.detail{min-width:0}.detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}.eyebrow{font-size:12px;color:var(--teal);font-weight:800;letter-spacing:1px;margin-bottom:7px}.detail-head h2{font-size:24px;color:var(--navy);margin:0 0 6px}.detail-head p{font-size:13px;color:var(--muted);margin:0}.btn{border:none;background:var(--teal);color:white;border-radius:11px;padding:12px 17px;font-size:13px;font-weight:750;white-space:nowrap}.btn:hover{background:#08796f}.btn.ghost{background:#fff;border:1px solid var(--line);color:#496674}.btn.ghost:hover{background:#f4f7f8}.btn.small{padding:8px 12px}.summary-box{padding:21px 23px;margin-bottom:17px}.summary-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px}.summary-title h3{margin:0;color:var(--navy);font-size:16px}.summary-title small{font-size:11px;color:var(--muted)}.focus-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.focus-item{background:#f7fafb;border:1px solid #eef2f3;border-radius:11px;padding:13px 14px}.focus-item strong{display:block;font-size:12px;color:#208f83;margin-bottom:7px}.focus-item p{margin:0;font-size:13px;line-height:1.75;color:#3c5360}.emergency{border:1px solid #f0d8d1;background:#fff7f5;border-radius:12px;padding:12px 14px;margin-top:12px;color:#ad5b4e;font-size:12.5px;line-height:1.8}.record-panel{padding:21px 23px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.section-title h3{margin:0;font-size:17px;color:var(--navy)}.section-title p{font-size:12px;color:var(--muted);margin:5px 0 0}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button{border:1px solid var(--line);padding:9px 13px;background:white;border-radius:9px;color:#7b8b91;font-size:12px}.tabs button.active{color:#08796f;border-color:#bddfd6;background:#eaf8f3;font-weight:800}.timeline{display:flex;flex-direction:column;gap:13px}.entry{border:1px solid var(--line);border-radius:13px;padding:17px 18px;position:relative;background:white}.entry.latest{border-color:#a9d9cf;background:#fcfffe}.entry-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.entry-top strong{font-size:14px;color:var(--navy)}.entry-top .date{font-size:11px;color:#889da7}.entry-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.entry p{white-space:pre-wrap;overflow-wrap:anywhere;color:#465c67;font-size:13px;line-height:1.85;margin:12px 0 0}.entry .label{font-size:11px;font-weight:800;color:#6d9298;margin-top:12px;display:block}.entry-footer{border-top:1px solid #edf1f2;margin-top:14px;padding-top:11px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;color:#91a1ab}.action-row{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:11px;flex-wrap:wrap}.all-read{font-size:12px;color:#168778;font-weight:700}.empty{padding:32px 16px;text-align:center;color:#81939c;font-size:13px;line-height:1.9}.footer{font-size:11px;color:#93a2ac;margin-top:24px;text-align:center}.modal-backdrop{position:fixed;inset:0;background:rgba(13,36,50,.64);z-index:99;display:none;align-items:center;justify-content:center;padding:18px}.modal-backdrop.open{display:flex}.modal{background:white;border-radius:18px;max-height:94vh;overflow-y:auto;width:min(610px,100%);box-shadow:0 22px 80px rgba(9,29,41,.35);padding:27px 29px}.modal h2{font-size:21px;margin:0 0 6px;color:var(--navy)}.modal-desc{font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:18px}.field{margin-bottom:15px}.field label{display:block;color:#46606f;font-size:12px;font-weight:750;margin-bottom:7px}.field input,.field textarea,.field select{width:100%;border:1px solid #dce8e9;border-radius:10px;padding:12px 13px;outline-color:var(--teal);color:var(--ink);background:#fff;font-size:13px}.field textarea{min-height:118px;resize:vertical;line-height:1.7}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.hint{font-size:11px;color:#8599a1;margin-top:7px;line-height:1.5}.checkboxline{display:flex;align-items:flex-start;gap:8px;font-size:12px;line-height:1.7;color:#5b7280;margin:10px 0}.checkboxline input{margin-top:3px;accent-color:var(--teal)}.checkboxline.hidden{display:none}.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:21px;padding-top:17px;border-top:1px solid var(--line)}.toast{position:fixed;bottom:25px;right:28px;background:#173c48;color:#fff;padding:13px 18px;border-radius:11px;box-shadow:0 12px 28px rgba(0,0,0,.13);font-size:13px;z-index:102;display:none;max-width:330px}.toast.show{display:block}.help{margin-top:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.help>div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}.help b{font-size:13px;color:var(--navy)}.help p{margin:8px 0 0;color:#6c828c;line-height:1.7;font-size:12px}
+@media(max-width:1050px){.sidebar{width:70px;flex-basis:70px;padding:20px 10px}.brand{padding:0;justify-content:center}.brand h1,.brand small,.navtitle,.nav button .text,.sidebar-bottom{display:none}.nav button{justify-content:center;font-size:20px;padding:13px 0}.mark{width:42px;height:42px}.nav-icon{font-size:20px}.workspace{grid-template-columns:minmax(225px,270px) minmax(0,1fr)}.content{padding:24px 20px}}
+@media(max-width:750px){.app{display:block}.sidebar{height:60px;width:100%;padding:8px 15px;flex-direction:row;align-items:center;justify-content:space-between}.brand h1{display:block;font-size:15px}.brand small{display:none}.nav{flex-direction:row;gap:3px}.nav button{padding:8px 10px}.topbar{padding:15px 18px;height:auto;align-items:flex-start}.headline{font-size:17px}.account label{display:none}.account select{max-width:135px;font-size:12px;padding:9px 8px}.avatar{display:none}.content{padding:17px 12px 45px}.kpi{gap:8px}.kpi-card{padding:14px}.kpi-number{font-size:23px}.kpi-caption{font-size:11px}.workspace{display:block}.case-panel{position:static;min-height:0;margin-bottom:15px}.cases{display:grid;grid-template-columns:1fr 1fr;gap:6px}.case{padding:10px}.case-title{font-size:12px}.case-meta{font-size:11px}.detail-head h2{font-size:21px}.focus-grid{grid-template-columns:1fr}.summary-box,.record-panel{padding:17px}.help{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.modal{padding:21px}.detail-head{gap:7px}.detail-head .btn{padding:10px 12px}}
+@media(max-width:400px){.cases{grid-template-columns:1fr}.topbar{gap:8px}.headline{font-size:15px}.account select{max-width:115px}.entry-top{align-items:start}}
+
+/* Mobile-first usability refinements: touch targets, readable forms, one-column content, safe-area modal. */
+:focus-visible{outline:3px solid #0a8b81;outline-offset:2px}
+@media(hover:none){.nav button:hover,.case:hover,.btn:hover{filter:none}}
+@media(max-width:750px){
+ html{scroll-padding-top:12px}
+ body{overflow-x:hidden}
+ .sidebar{min-height:64px;height:auto;gap:10px;padding:9px 12px}
+ .brand{flex:0 0 auto}
+ .nav{min-width:0;justify-content:flex-end;gap:4px}
+ .nav button{width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px}
+ .nav-icon{font-size:22px;line-height:1}
+ .topbar{min-height:72px;gap:10px;flex-wrap:wrap;padding:14px}
+ .subheadline{font-size:12px;line-height:1.5}
+ .account{margin-left:auto;flex:0 0 auto}
+ .account select{height:44px;max-width:170px;font-size:16px;padding:8px 10px}
+ .content{padding:14px 12px calc(48px + env(safe-area-inset-bottom))}
+ .notice{padding:12px 13px;font-size:13px;line-height:1.6;margin-bottom:14px}
+ .kpi{gap:8px;margin-bottom:14px}
+ .kpi-card{padding:12px 10px;min-width:0}
+ .kpi-caption{font-size:12px;line-height:1.5;min-height:36px}
+ .kpi-number{font-size:26px;margin-top:2px}
+ .case-panel{padding:15px 12px;margin-bottom:15px}
+ .panel-heading{margin-bottom:12px}
+ .search{width:calc(100% - 8px);margin:0 4px 12px;min-height:48px;padding:11px 13px;font-size:16px}
+ .filter-group{margin:0 4px 12px;gap:8px}
+ .pill{min-height:44px;font-size:14px;padding:10px 13px}
+ .cases{display:flex;flex-direction:column;gap:6px;max-height:265px;overflow-y:auto;overscroll-behavior:contain}
+ .case{min-height:70px;padding:12px 13px}
+ .case-title{font-size:15px}
+ .case-meta{font-size:12px}
+ .detail-head{flex-wrap:wrap;align-items:center;margin-bottom:12px;gap:12px}
+ .detail-head h2{font-size:22px}
+ .detail-head p{font-size:13px;line-height:1.6}
+ .detail-head .btn{min-height:48px;font-size:15px;padding:11px 15px}
+ .summary-box,.record-panel{padding:17px 15px}
+ .summary-title{flex-wrap:wrap}
+ .summary-title h3,.section-title h3{font-size:16px}
+ .section-title{flex-wrap:wrap}
+ .focus-item strong{font-size:14px}
+ .focus-item p,.entry p{font-size:14px;line-height:1.75}
+ .tabs button{min-height:44px;padding:10px 14px;font-size:14px}
+ .entry{padding:15px 13px}
+ .entry-top strong{font-size:15px}
+ .entry-top .date{font-size:12px}
+ .entry-footer{font-size:12px}
+ .action-row{align-items:stretch;flex-direction:column}
+ .action-row .btn{width:100%;min-height:48px;font-size:15px}
+ .modal-backdrop{align-items:flex-end;justify-content:center;padding:0}
+ .modal{width:100%;max-height:94vh;max-height:94dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(16px + env(safe-area-inset-bottom));overscroll-behavior:contain}
+ .modal h2{font-size:20px}
+ .modal-desc,.field label{font-size:14px}
+ .field input,.field select,.field textarea{min-height:48px;font-size:16px;line-height:1.5}
+ .field textarea{min-height:135px}
+ .hint,.checkboxline{font-size:13px}
+ .checkboxline input{width:20px;height:20px;flex:0 0 20px;margin-top:2px}
+ .modal-footer{position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:white;margin:16px -18px -16px;padding:12px 18px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -7px 20px rgba(19,44,66,.07)}
+ .modal-footer .btn{min-height:48px;font-size:15px;white-space:normal}
+ .modal-footer .btn[type=submit]{flex:1}
+ .toast{right:12px;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:none;text-align:center}
+}
+@media(max-width:420px){
+ .headline{font-size:17px}
+ .account{margin-left:0}
+ .account select{max-width:200px}
+ .kpi-card{padding:11px 8px}
+ .kpi-caption{font-size:11.5px}
+ .kpi-number{font-size:24px}
+ .detail-head .btn{width:100%}
+}
+body.modal-open{overflow:hidden}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="brand"><span class="mark">交</span><div><h1>安護交班</h1><small>HOME CARE HANDOVER</small></div></div>
+<div class="navtitle">工作選單</div>
+<nav class="nav"><button class="active" id="navCases" title="個案交班"><span class="nav-icon">▦</span><span class="text">個案交班</span></button><button id="navUnread" title="待閱交班"><span class="nav-icon">◷</span><span class="text">待閱交班</span></button><button id="navHelp" title="使用說明"><span class="nav-icon">ⓘ</span><span class="text">使用說明</span></button></nav>
+<div class="sidebar-bottom"><strong>● 原型展示模式</strong>本頁僅展示流程，沒有真正的登入驗證或伺服器資料庫。請勿輸入真實個案資料。</div>
+</aside>
+<main class="main"><header class="topbar"><div><div class="headline">個案交班工作台</div><div class="subheadline">一次記錄・持續傳承・新接班人員直接查閱</div></div><div class="account"><label for="actorSelect">切換展示身分</label><select id="actorSelect"><option value="A">居服員 A｜宜真</option><option value="B">居服員 B｜佳穎</option><option value="C" selected>居服員 C｜雅雯</option><option value="S">居督｜志明</option></select><div class="avatar" id="avatar">C</div></div></header>
+<section class="content"><div class="notice"><b>ⓘ</b><span><strong>互動原型，所有人名及個案均為虛構。</strong> 儲存內容只保留在目前瀏覽器的本機儲存空間，換裝置、瀏覽器或清除資料就無法同步。切換身分僅供演示，<strong>不是正式權限控管</strong>，請勿填入真實個案或健康資訊。</span></div>
+<div class="kpi"><div class="kpi-card"><div class="kpi-caption">我可查看的個案</div><div class="kpi-number" id="kpiCases">3</div></div><div class="kpi-card accent"><div class="kpi-caption">待我閱讀確認</div><div class="kpi-number" id="kpiUnread">2</div></div><div class="kpi-card"><div class="kpi-caption">系統內交班筆數</div><div class="kpi-number" id="kpiRecords">3</div></div></div>
+<div class="workspace"><section class="panel case-panel"><div class="panel-heading"><h2>服務個案</h2><span class="micro" id="caseCount"></span></div><input class="search" id="searchInput" type="search" placeholder="搜尋個案姓名、代碼…" autocomplete="off"/><div class="filter-group"><button class="pill active" data-filter="all">全部</button><button class="pill" data-filter="unread">待閱讀</button><button class="pill" data-filter="risk">近期提醒</button></div><div class="cases" id="caseList"></div></section>
+<section class="detail" id="detail"><div class="empty panel">請先選擇一位服務個案</div></section></div>
+<section class="help" id="helpSection"><div><b>01｜A → B 交班</b><p>居服員 A 新增紀錄並儲存到個案底下，而非只傳給特定同事。</p></div><div><b>02｜C 自動承接歷史</b><p>切換居服員 C，點入同一個個案，即可看到 A、B 曾留下的所有交班紀錄。</p></div><div><b>03｜已讀留痕</b><p>新接班者看完後按「我已閱讀」，讓督導知道是否完成資訊確認。</p></div></section><div class="footer">安護交班 · 互動展示版本 1.1（手機操作優化） · 未連接真實人事系統、照管平台或跨裝置資料庫</div></section></main>
+</div>
+<div class="modal-backdrop" id="modalBackdrop" role="presentation"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><h2 id="modalTitle">新增交班紀錄</h2><div class="modal-desc" id="modalDesc">將內容存放在個案的交班歷程中，後續被指派的居服員亦能查看。</div><form id="recordForm"><div class="form-grid"><div class="field"><label for="kind">交班類型</label><select id="kind" required><option value="日常照顧">日常照顧</option><option value="環境與安全">環境與安全</option><option value="生活習慣">生活習慣</option><option value="家屬溝通">家屬溝通</option><option value="異常狀況">異常狀況</option><option value="服務調整">服務調整</option></select></div><div class="field"><label for="risk">重要程度</label><select id="risk"><option value="一般">一般資訊</option><option value="提醒">需要留意</option><option value="緊急">重大異常・需立即聯絡督導</option></select></div></div><div class="field"><label for="summary">交班主旨 *</label><input id="summary" maxlength="70" required placeholder="例：浴室地墊濕滑，需特別注意"/></div><div class="field"><label for="description">交班內容與具體做法 *</label><textarea id="description" required minlength="8" maxlength="1500" placeholder="請寫清楚：發現什麼？已如何處理？下一班要注意什麼？\n避免只寫「同前」或無法操作的模糊描述。"></textarea><div class="hint">以客觀事實記載，勿輸入與服務無關的個人資訊。</div></div><div class="field"><label for="expires">提醒有效期限（選填）</label><input id="expires" type="date"/><div class="hint">臨時事項可設定期限；逾期仍保留歷程，但不再顯示為待處理提醒。</div></div><label class="checkboxline hidden" id="urgentLine"><input type="checkbox" id="urgentConfirmed"/><span>我確認已另行依機構流程即時聯繫督導／主管；此處僅做補充紀錄，不能取代即時通報。</span></label><div class="modal-footer"><button type="button" class="btn ghost" id="cancelModal">取消</button><button class="btn" type="submit">儲存這筆交班</button></div></form></div></div>
+<div class="toast" role="status" id="toast"></div>
+<script>
+(function(){'use strict';
+const KEY='homecare-handover-prototype-v1';
+const users={A:'居服員 A｜宜真',B:'居服員 B｜佳穎',C:'居服員 C｜雅雯',S:'居督｜志明'};
+const cases=[
+ {id:'HC-001',name:'陳○美',area:'太平區',service:'沐浴、身體照顧',staff:['A','B','C'],focus:[['移位安全','起身時先口頭提醒，確認助行器已放妥，行走時需在旁注意。'],['沐浴流程','先確認浴室地面乾燥、防滑措施就位，再依核定服務內容協助。'],['溝通習慣','執行照顧前先說明步驟，讓個案有心理準備。'],['家屬配合','照顧用品通常放在浴室外層架；若位置更動，請直接詢問家屬。']],note:'若出現跌倒、突發不適或其他重大異常，應優先依機構緊急應變及通報流程處理。'},
+ {id:'HC-002',name:'林○福',area:'霧峰區',service:'備餐、家務協助',staff:['A'],focus:[['飲食偏好','餐點以清淡為主，依個案當日需求及核定項目執行。'],['備餐用品','常用鍋具放在廚房下層抽屜。'],['居家環境','廚房地板偶有濕滑，進出時先確認環境安全。'],['服務邊界','協助範圍以照顧計畫及核定服務為準。']],note:'服務內容異動應先通知督導確認。'},
+ {id:'HC-003',name:'王○蘭',area:'大里區',service:'陪同外出、日常照顧',staff:['B','C'],focus:[['外出準備','出發前確認輔具、個人物品，並核對預定路線。'],['行動觀察','依當日狀況調整步調，不自行更動核定服務內容。'],['溝通方式','較習慣先被告知今天的行程安排。'],['家屬聯繫','行程有異動時先向督導回報，依機構程序與家屬聯繫。']],note:'外出時如有突發情況，優先確保安全並依機構規範即時通報。'}
+];
+const now=()=>new Date().toISOString();
+function daysAgo(n){return new Date(Date.now()-n*86400000).toISOString()}
+const seed={records:[
+ {id:'R-001',caseId:'HC-001',author:'A',kind:'環境與安全',risk:'提醒',summary:'浴室防滑注意事項',description:'今天協助沐浴前發現浴室入口地墊偏滑，已告知家屬並暫時移至旁邊。下次服務請先確認地面乾燥，並依機構安全流程處理。',createdAt:daysAgo(3),expires:''},
+ {id:'R-002',caseId:'HC-001',author:'B',kind:'日常照顧',risk:'一般',summary:'新的沐浴用品位置',description:'家屬將個案的毛巾與清潔用品移到浴室門外第二層置物架。協助沐浴前先確認物品位置即可。',createdAt:daysAgo(1),expires:''},
+ {id:'R-003',caseId:'HC-003',author:'B',kind:'生活習慣',risk:'提醒',summary:'外出前需預留準備時間',description:'近期個案出門前會希望先確認隨身物品。請預留時間說明行程及清點物品，避免催促；若發現不適則先依流程回報。',createdAt:daysAgo(2),expires:''},
+ {id:'R-004',caseId:'HC-002',author:'A',kind:'服務調整',risk:'一般',summary:'備餐時常用鍋具位置',description:'家屬將常用鍋具移至流理臺下方右側抽屜，服務前可先確認。',createdAt:daysAgo(4),expires:''}
+ ],reads:{}};
+let data;
+try{data=JSON.parse(localStorage.getItem(KEY))||structuredClone(seed);if(!Array.isArray(data.records)||!data.reads)throw Error('bad')}catch(e){data=JSON.parse(JSON.stringify(seed))}
+let actor='C',current='HC-001',filter='all',tab='all';
+const $=id=>document.getElementById(id);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){alert('瀏覽器儲存空間不可用，這筆資料無法保存。');return false}}
+function esc(value){return String(value??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
+function visibleCases(){return cases.filter(c=>actor==='S'||c.staff.includes(actor))}
+function recordsOf(id){return data.records.filter(r=>r.caseId===id).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))}
+function isUnexpired(r){return !r.expires || new Date(r.expires+'T23:59:59') >= new Date()}
+function unread(c){const recs=recordsOf(c.id);if(!recs.length)return false;const latest=recs[0].createdAt, seen=data.reads[actor+'|'+c.id];return !seen||new Date(seen)<new Date(latest)}
+function hasRisk(c){return recordsOf(c.id).some(r=>r.risk!=='一般'&&isUnexpired(r))}
+function datefmt(d){return new Date(d).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})}
+function render(){const list=visibleCases();$('kpiCases').textContent=list.length;$('kpiUnread').textContent=list.filter(unread).length;$('kpiRecords').textContent=data.records.length;$('caseCount').textContent=list.length+' 位';$('avatar').textContent=actor;const q=$('searchInput').value.trim().toLowerCase();const filtered=list.filter(c=>(c.name+c.id+c.area).toLowerCase().includes(q)).filter(c=>filter==='all'||(filter==='unread'&&unread(c))||(filter==='risk'&&hasRisk(c)));
+$('caseList').innerHTML=filtered.map(c=>`<button type="button" class="case ${c.id===current?'active':''}" data-case="${c.id}"><div class="case-title"><span>${esc(c.name)}</span>${unread(c)?'<span class="badge unread">● 待閱</span>':'<span class="badge read">✓ 已閱</span>'}</div><div class="case-meta">${c.id} · ${esc(c.area)}<br>${esc(c.service)}</div></button>`).join('')||'<div class="empty">沒有符合條件的個案</div>';
+if(!list.some(c=>c.id===current))current=list[0]?.id||null;renderDetail();}
+function renderDetail(){const c=cases.find(x=>x.id===current);if(!c){$('detail').innerHTML='<div class="panel empty">此身分目前沒有可查看的個案</div>';return}
+const recs=recordsOf(c.id), isUnread=unread(c);
+$('detail').innerHTML=`<div class="detail-head"><div><div class="eyebrow">個案交班紀錄 / ${esc(c.id)}</div><h2>${esc(c.name)} <span class="badge neutral">${esc(c.area)}</span></h2><p>服務類型：${esc(c.service)}｜同一個案的交班紀錄會持續累積</p></div><button id="newBtn" class="btn">＋ 新增交班</button></div>
+<section class="panel summary-box"><div class="summary-title"><h3>📌 目前固定照顧重點</h3><small>正式版由居督維護並保留修訂歷程</small></div><div class="focus-grid">${c.focus.map(([title,body])=>`<div class="focus-item"><strong>${esc(title)}</strong><p>${esc(body)}</p></div>`).join('')}</div><div class="emergency">⚠ ${esc(c.note)}</div></section>
+<section class="panel record-panel"><div class="section-title"><div><h3>交班紀錄歷程 <span class="micro">（${recs.length} 筆）</span></h3><p>依時間排序；後續新居服員可直接查閱</p></div>${isUnread?'<span class="badge unread">尚未確認閱讀</span>':'<span class="badge read">已完成閱讀</span>'}</div><div class="tabs"><button data-tab="all" class="${tab==='all'?'active':''}">所有紀錄</button><button data-tab="risk" class="${tab==='risk'?'active':''}">重要提醒</button></div><div class="timeline">${recs.filter(r=>tab==='all'||r.risk!=='一般').map((r,i)=>`<article class="entry ${i===0?'latest':''}"><div class="entry-top"><strong>${esc(r.summary)}</strong><span class="date">${datefmt(r.createdAt)}</span></div><div class="entry-badges"><span class="badge neutral">${esc(r.kind)}</span>${r.risk==='提醒'?'<span class="badge unread">需留意</span>':r.risk==='緊急'?'<span class="badge risk">重大異常</span>':''}${r.expires?`<span class="badge neutral">提醒至 ${esc(r.expires)}${isUnexpired(r)?'':'（已到期）'}</span>`:''}</div><span class="label">交班內容</span><p>${esc(r.description)}</p><div class="entry-footer"><span>記錄人：${esc(users[r.author]||'其他人員')}</span><span>原始紀錄保留 · 不直接覆寫</span></div></article>`).join('')||'<div class="empty">目前沒有符合類別的紀錄</div>'}</div><div class="action-row"><div class="micro">紀錄閱讀狀態以個案最新一筆交班為準</div>${isUnread?'<button class="btn" id="readBtn">✓ 我已閱讀交班紀錄</button>':'<span class="all-read">✓ 目前最新交班已確認</span>'}</div></section>`;
+$('newBtn').addEventListener('click',openModal);const rb=$('readBtn');if(rb)rb.addEventListener('click',()=>{data.reads[actor+'|'+c.id]=now();if(save()){render();toast('已記錄 '+users[actor]+' 的閱讀確認')}});document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{tab=el.dataset.tab;renderDetail()}));}
+function toast(m){const el=$('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000)}
+function openModal(){if(!current)return;document.body.classList.add('modal-open');$('recordForm').reset();$('modalDesc').textContent='個案：'+cases.find(c=>c.id===current).name+'｜記錄人：'+users[actor]+'。交班會保留在個案歷程，不必指定只給某一位居服員。';$('modalBackdrop').classList.add('open');$('summary').focus();showUrgent()}
+function closeModal(){$('modalBackdrop').classList.remove('open');document.body.classList.remove('modal-open')}
+function showUrgent(){$('urgentLine').classList.toggle('hidden',$('risk').value!=='緊急')}
+$('risk').addEventListener('change',showUrgent);$('cancelModal').addEventListener('click',closeModal);$('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+$('recordForm').addEventListener('submit',e=>{e.preventDefault();if(!current||!visibleCases().some(c=>c.id===current)){alert('目前沒有本個案閱覽權限。');return}if($('risk').value==='緊急'&&!$('urgentConfirmed').checked){alert('重大異常應先依機構程序即時通知督導，再勾選確認並留存紀錄。');return}
+const r={id:'R-'+Date.now(),caseId:current,author:actor,kind:$('kind').value,risk:$('risk').value,summary:$('summary').value.trim(),description:$('description').value.trim(),expires:$('expires').value,createdAt:now()};if(!r.summary||r.description.length<8){alert('請完整填寫交班主旨與內容（至少 8 字）。');return}data.records.push(r);if(save()){tab='all';closeModal();render();toast('已儲存交班，後續被指派人員可查閱（限此瀏覽器展示）')}});
+$('actorSelect').addEventListener('change',e=>{actor=e.target.value;filter='all';tab='all';document.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active',el.dataset.filter===filter));$('searchInput').value='';const access=visibleCases();if(!access.some(c=>c.id===current))current=access[0]?.id||null;render();toast('已切換展示身分：'+users[actor])});
+$('caseList').addEventListener('click',e=>{const el=e.target.closest('[data-case]');if(!el)return;current=el.dataset.case;tab='all';render();if(window.matchMedia('(max-width:750px)').matches){$('detail').scrollIntoView({behavior:'smooth',block:'start'})}});
+$('searchInput').addEventListener('input',render);document.querySelectorAll('[data-filter]').forEach(el=>el.addEventListener('click',()=>{filter=el.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===el));render()}));
+$('navCases').addEventListener('click',()=>{filter='all';document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));render();window.scrollTo({top:0,behavior:'smooth'})});
+$('navUnread').addEventListener('click',()=>{filter='unread';document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter==='unread'));render();window.scrollTo({top:0,behavior:'smooth'})});
+$('navHelp').addEventListener('click',()=>$('helpSection').scrollIntoView({behavior:'smooth',block:'center'}));
+render();
+})();
+</script>
+</body>
+</html>
