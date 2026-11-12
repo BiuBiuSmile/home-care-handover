@@ -15,7 +15,7 @@ create or replace function public.on_user_registered()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   insert into public.profiles(id, display_name, role, active)
-  values (new.id, left(coalesce(nullif(new.raw_user_meta_data->>'display_name',''), split_part(coalesce(new.email,''),'@',1)), 80), 'staff', false)
+  values (new.id, left(coalesce(nullif(trim(new.raw_user_meta_data->>'display_name'),''), nullif(split_part(coalesce(new.email,''),'@',1),''), '待審核人員 · 尾碼' || right(coalesce(nullif(new.phone,''),'????'),4)), 80), 'staff', false)
   on conflict (id) do nothing;
   return new;
 end; $$;
