@@ -166,7 +166,7 @@ grant execute on function public.is_active(), public.is_admin(), public.can_acce
 -- Guard against lockout: a signed-in admin cannot deactivate/demote themself,
 -- and no request may deactivate/demote the last active administrator.
 create or replace function public.guard_admin_updates()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   if old.role = 'admin' and old.active and (new.role <> 'admin' or not new.active) then
     if auth.uid() = old.id then
@@ -179,7 +179,7 @@ begin
     end if;
   end if;
   return new;
-end; $;
+end; $$;
 
 create trigger profiles_admin_guard before update on public.profiles
 for each row execute function public.guard_admin_updates();
