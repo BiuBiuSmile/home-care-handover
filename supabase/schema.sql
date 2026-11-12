@@ -184,6 +184,16 @@ end; $$;
 create trigger profiles_admin_guard before update on public.profiles
 for each row execute function public.guard_admin_updates();
 
+-- Remove inherited PUBLIC EXECUTE privileges on SECURITY DEFINER helpers.
+revoke execute on function public.on_user_registered() from public, anon, authenticated;
+revoke execute on function public.stamp_handover_author() from public, anon, authenticated;
+revoke execute on function public.guard_admin_updates() from public, anon, authenticated;
+revoke execute on function public.is_active() from public, anon, authenticated;
+revoke execute on function public.is_admin() from public, anon, authenticated;
+revoke execute on function public.can_access_case(text) from public, anon, authenticated;
+revoke execute on function public.mark_case_read(text) from public, anon, authenticated;
+grant execute on function public.is_active(), public.is_admin(), public.can_access_case(text), public.mark_case_read(text) to authenticated;
+
 -- ONE-TIME FIRST ADMIN BOOTSTRAP (run manually in SQL editor after signing up).
 -- Replace the email below with your own account. Do NOT use this in browser JS.
 -- update public.profiles set role='admin', active=true
