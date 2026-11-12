@@ -162,6 +162,28 @@ grant select on public.case_reads to authenticated;
 revoke all on function public.is_active(), public.is_admin(), public.can_access_case(text), public.mark_case_read(text) from public;
 grant execute on function public.is_active(), public.is_admin(), public.can_access_case(text), public.mark_case_read(text) to authenticated;
 
+
+-- Guard against lockout: a signed-in admin cannot deactivate/demote themself,
+-- and no request may deactivate/demote the last active administrator.
+create or replace function public.guard_admin_updates()
+returns trigger language plpgsql security definer set search_path = '' as $
+begin
+  if old.role = 'admin' and old.active and (new.role <> 'admin' or not new.active) then
+    if auth.uid() = old.id then
+      raise exception 'cannot deactivate or demote your own admin account'
+        using errcode = '42501';
+    end if;
+    if (select count(*) from public.profiles p where p.role = 'admin' and p.active) <= 1 then
+      raise exception 'cannot deactivate or demote the last active administrator'
+        using errcode = '42501';
+    end if;
+  end if;
+  return new;
+end; $;
+
+create trigger profiles_admin_guard before update on public.profiles
+for each row execute function public.guard_admin_updates();
+
 -- ONE-TIME FIRST ADMIN BOOTSTRAP (run manually in SQL editor after signing up).
 -- Replace the email below with your own account. Do NOT use this in browser JS.
 -- update public.profiles set role='admin', active=true
