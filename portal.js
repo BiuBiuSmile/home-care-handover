@@ -6,7 +6,7 @@
 (function(){
  const $ = id => document.getElementById(id);
  const config = window.CARE_CONFIG || {};
- const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',register:false};
+ const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',register:false,verifyPhone:null};
  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
  const roles = {admin:'管理員',supervisor:'居督',staff:'居服員'};
  const when = v => v ? new Date(v).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}) : '';
@@ -34,6 +34,9 @@
  async function init(){
    $('authSwitch').addEventListener('click',switchRegistration);
    $('authForm').addEventListener('submit',handleAuth);
+   $('verifyForm').addEventListener('submit',handleVerifySms);
+   $('verifyBack').addEventListener('click',hideVerifySms);
+   $('resendSms').addEventListener('click',resendVerifySms);
    $('pendingReload').addEventListener('click',refreshIdentity);
    $('pendingLogout').addEventListener('click',logout);
    $('logoutBtn').addEventListener('click',logout);
@@ -73,6 +76,13 @@
    await checkQuery(result,'確認登入狀態');
    await setSession(result.data.session);
  }
+ function phoneE164(input){
+   const raw=String(input||'').trim().replace(/[\s()-]/g,'');
+   if(/^09\d{8}$/.test(raw))return '+886'+raw.slice(1);
+   if(/^8869\d{8}$/.test(raw))return '+'+raw;
+   if(/^\+8869\d{8}$/.test(raw))return raw;
+   throw Error('請輸入有效的台灣手機門號，例如 0912345678 或 +886912345678');
+ }
  function switchRegistration(){
    state.register=!state.register;
    $('authTitle').textContent=state.register?'申請使用帳號':'員工登入';
@@ -83,24 +93,75 @@
    $('authSwitch').textContent=state.register?'已有帳號，返回登入':'申請新帳號';
    $('authMessage').textContent='';
  }
+ function showVerifySms(phone){
+   state.verifyPhone=phone;
+   $('verifyHint').textContent='已向 '+phone+' 申請傳送驗證碼。若尚未收到簡訊，請確認 Supabase 已啟用 Phone 及簡訊供應商。';
+   $('authForm').hidden=true;
+   $('verifyForm').hidden=false;
+   $('smsCode').value='';
+   $('authMessage').textContent='';
+   $('smsCode').focus();
+ }
+ function hideVerifySms(){
+   state.verifyPhone=null;
+   $('verifyForm').hidden=true;
+   $('authForm').hidden=false;
+   $('smsCode').value='';
+   $('authMessage').textContent='';
+ }
  async function handleAuth(e){
    e.preventDefault();if(!state.db)return;
-   const form=$('authForm'),email=$('email').value.trim(),password=$('password').value;
+   const form=$('authForm'), password=$('password').value;
    setBusy(form,true);
    try{
+     const phone=phoneE164($('phone').value);
      if(state.register){
        const name=$('displayName').value.trim();
        if(!name)throw Error('請輸入顯示姓名');
-       await checkQuery(await state.db.auth.signUp({email,password,options:{data:{display_name:name}}}),'註冊帳號');
-       authMessage('申請已送出。若啟用信箱驗證，請先查收驗證信；之後須等管理員啟用帳號及指派個案。');
+       const result=await checkQuery(await state.db.auth.signUp({
+         phone,password,options:{data:{display_name:name}}
+       }),'申請門號帳號');
        $('password').value='';
+       if(result.session){
+         await refreshIdentity();
+         notify('申請已送出，等待管理員審核');
+       }else{
+         showVerifySms(phone);
+       }
      }else{
-       await checkQuery(await state.db.auth.signInWithPassword({email,password}),'登入');
+       await checkQuery(await state.db.auth.signInWithPassword({phone,password}),'手機登入');
        $('password').value='';
        await refreshIdentity();
      }
+   }catch(error){
+     const msg=errText(error);
+     authMessage(/phone signups? (?:are |is )?disabled/i.test(msg)?'Supabase 尚未啟用手機登入，請到 Authentication → Sign In / Providers → Phone 開啟並設定簡訊服務。':msg,true);
+   }finally{setBusy(form,false)}
+ }
+ async function handleVerifySms(e){
+   e.preventDefault();
+   if(!state.db || !state.verifyPhone)return;
+   const form=$('verifyForm'),token=$('smsCode').value.trim();
+   if(!/^\d{4,8}$/.test(token)){authMessage('請輸入簡訊中的數字驗證碼',true);return}
+   setBusy(form,true);
+   try{
+     await checkQuery(await state.db.auth.verifyOtp({
+       phone:state.verifyPhone,token,type:'sms'
+     }),'驗證手機門號');
+     hideVerifySms();
+     await refreshIdentity();
+     notify('門號驗證成功！帳號需等管理員核准後才可使用');
    }catch(error){authMessage(errText(error),true)}
    finally{setBusy(form,false)}
+ }
+ async function resendVerifySms(){
+   if(!state.db || !state.verifyPhone)return;
+   const b=$('resendSms');b.disabled=true;
+   try{
+     await checkQuery(await state.db.auth.resend({phone:state.verifyPhone,type:'sms'}),'重新發送簡訊');
+     authMessage('新的驗證碼已發送，請查看手機簡訊並留意發送間隔。',false);
+   }catch(error){authMessage(errText(error),true)}
+   finally{b.disabled=false}
  }
  async function setSession(session){
    if(!session?.user){state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];show('authScreen');return;}
@@ -118,7 +179,7 @@
      state.profile=await checkQuery(r,'取得帳號權限');
      if(!state.profile.active){
        $('pendingTitle').textContent='帳號尚未啟用';
-       $('pendingMessage').textContent='已登入 '+(state.profile.display_name||user.email)+'，但管理員尚未啟用您的帳號。請先完成審核，開通後再指派個案。';
+       $('pendingMessage').textContent='已登入 '+(state.profile.display_name||user.phone||user.email)+'，但管理員尚未啟用您的帳號。請先完成審核，開通後再指派個案。';
        show('pendingScreen');return;
      }
      $('identity').textContent=state.profile.display_name+'｜'+(roles[state.profile.role]||state.profile.role);
