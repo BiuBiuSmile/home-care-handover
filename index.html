@@ -11,6 +11,77 @@
 @media(max-width:1050px){.sidebar{width:70px;flex-basis:70px;padding:20px 10px}.brand{padding:0;justify-content:center}.brand h1,.brand small,.navtitle,.nav button .text,.sidebar-bottom{display:none}.nav button{justify-content:center;font-size:20px;padding:13px 0}.mark{width:42px;height:42px}.nav-icon{font-size:20px}.workspace{grid-template-columns:minmax(225px,270px) minmax(0,1fr)}.content{padding:24px 20px}}
 @media(max-width:750px){.app{display:block}.sidebar{height:60px;width:100%;padding:8px 15px;flex-direction:row;align-items:center;justify-content:space-between}.brand h1{display:block;font-size:15px}.brand small{display:none}.nav{flex-direction:row;gap:3px}.nav button{padding:8px 10px}.topbar{padding:15px 18px;height:auto;align-items:flex-start}.headline{font-size:17px}.account label{display:none}.account select{max-width:135px;font-size:12px;padding:9px 8px}.avatar{display:none}.content{padding:17px 12px 45px}.kpi{gap:8px}.kpi-card{padding:14px}.kpi-number{font-size:23px}.kpi-caption{font-size:11px}.workspace{display:block}.case-panel{position:static;min-height:0;margin-bottom:15px}.cases{display:grid;grid-template-columns:1fr 1fr;gap:6px}.case{padding:10px}.case-title{font-size:12px}.case-meta{font-size:11px}.detail-head h2{font-size:21px}.focus-grid{grid-template-columns:1fr}.summary-box,.record-panel{padding:17px}.help{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.modal{padding:21px}.detail-head{gap:7px}.detail-head .btn{padding:10px 12px}}
 @media(max-width:400px){.cases{grid-template-columns:1fr}.topbar{gap:8px}.headline{font-size:15px}.account select{max-width:115px}.entry-top{align-items:start}}
+
+/* Mobile-first usability refinements: touch targets, readable forms, one-column content, safe-area modal. */
+:focus-visible{outline:3px solid #0a8b81;outline-offset:2px}
+@media(hover:none){.nav button:hover,.case:hover,.btn:hover{filter:none}}
+@media(max-width:750px){
+ html{scroll-padding-top:12px}
+ body{overflow-x:hidden}
+ .sidebar{min-height:64px;height:auto;gap:10px;padding:9px 12px}
+ .brand{flex:0 0 auto}
+ .nav{min-width:0;justify-content:flex-end;gap:4px}
+ .nav button{width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px}
+ .nav-icon{font-size:22px;line-height:1}
+ .topbar{min-height:72px;gap:10px;flex-wrap:wrap;padding:14px}
+ .subheadline{font-size:12px;line-height:1.5}
+ .account{margin-left:auto;flex:0 0 auto}
+ .account select{height:44px;max-width:170px;font-size:16px;padding:8px 10px}
+ .content{padding:14px 12px calc(48px + env(safe-area-inset-bottom))}
+ .notice{padding:12px 13px;font-size:13px;line-height:1.6;margin-bottom:14px}
+ .kpi{gap:8px;margin-bottom:14px}
+ .kpi-card{padding:12px 10px;min-width:0}
+ .kpi-caption{font-size:12px;line-height:1.5;min-height:36px}
+ .kpi-number{font-size:26px;margin-top:2px}
+ .case-panel{padding:15px 12px;margin-bottom:15px}
+ .panel-heading{margin-bottom:12px}
+ .search{width:calc(100% - 8px);margin:0 4px 12px;min-height:48px;padding:11px 13px;font-size:16px}
+ .filter-group{margin:0 4px 12px;gap:8px}
+ .pill{min-height:44px;font-size:14px;padding:10px 13px}
+ .cases{display:flex;flex-direction:column;gap:6px;max-height:265px;overflow-y:auto;overscroll-behavior:contain}
+ .case{min-height:70px;padding:12px 13px}
+ .case-title{font-size:15px}
+ .case-meta{font-size:12px}
+ .detail-head{flex-wrap:wrap;align-items:center;margin-bottom:12px;gap:12px}
+ .detail-head h2{font-size:22px}
+ .detail-head p{font-size:13px;line-height:1.6}
+ .detail-head .btn{min-height:48px;font-size:15px;padding:11px 15px}
+ .summary-box,.record-panel{padding:17px 15px}
+ .summary-title{flex-wrap:wrap}
+ .summary-title h3,.section-title h3{font-size:16px}
+ .section-title{flex-wrap:wrap}
+ .focus-item strong{font-size:14px}
+ .focus-item p,.entry p{font-size:14px;line-height:1.75}
+ .tabs button{min-height:44px;padding:10px 14px;font-size:14px}
+ .entry{padding:15px 13px}
+ .entry-top strong{font-size:15px}
+ .entry-top .date{font-size:12px}
+ .entry-footer{font-size:12px}
+ .action-row{align-items:stretch;flex-direction:column}
+ .action-row .btn{width:100%;min-height:48px;font-size:15px}
+ .modal-backdrop{align-items:flex-end;justify-content:center;padding:0}
+ .modal{width:100%;max-height:94vh;max-height:94dvh;border-radius:20px 20px 0 0;padding:22px 18px calc(16px + env(safe-area-inset-bottom));overscroll-behavior:contain}
+ .modal h2{font-size:20px}
+ .modal-desc,.field label{font-size:14px}
+ .field input,.field select,.field textarea{min-height:48px;font-size:16px;line-height:1.5}
+ .field textarea{min-height:135px}
+ .hint,.checkboxline{font-size:13px}
+ .checkboxline input{width:20px;height:20px;flex:0 0 20px;margin-top:2px}
+ .modal-footer{position:sticky;bottom:calc(-16px - env(safe-area-inset-bottom));background:white;margin:16px -18px -16px;padding:12px 18px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -7px 20px rgba(19,44,66,.07)}
+ .modal-footer .btn{min-height:48px;font-size:15px;white-space:normal}
+ .modal-footer .btn[type=submit]{flex:1}
+ .toast{right:12px;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:none;text-align:center}
+}
+@media(max-width:420px){
+ .headline{font-size:17px}
+ .account{margin-left:0}
+ .account select{max-width:200px}
+ .kpi-card{padding:11px 8px}
+ .kpi-caption{font-size:11.5px}
+ .kpi-number{font-size:24px}
+ .detail-head .btn{width:100%}
+}
+body.modal-open{overflow:hidden}
 </style>
 </head>
 <body>
@@ -26,7 +97,7 @@
 <div class="kpi"><div class="kpi-card"><div class="kpi-caption">我可查看的個案</div><div class="kpi-number" id="kpiCases">3</div></div><div class="kpi-card accent"><div class="kpi-caption">待我閱讀確認</div><div class="kpi-number" id="kpiUnread">2</div></div><div class="kpi-card"><div class="kpi-caption">系統內交班筆數</div><div class="kpi-number" id="kpiRecords">3</div></div></div>
 <div class="workspace"><section class="panel case-panel"><div class="panel-heading"><h2>服務個案</h2><span class="micro" id="caseCount"></span></div><input class="search" id="searchInput" type="search" placeholder="搜尋個案姓名、代碼…" autocomplete="off"/><div class="filter-group"><button class="pill active" data-filter="all">全部</button><button class="pill" data-filter="unread">待閱讀</button><button class="pill" data-filter="risk">近期提醒</button></div><div class="cases" id="caseList"></div></section>
 <section class="detail" id="detail"><div class="empty panel">請先選擇一位服務個案</div></section></div>
-<section class="help" id="helpSection"><div><b>01｜A → B 交班</b><p>居服員 A 新增紀錄並儲存到個案底下，而非只傳給特定同事。</p></div><div><b>02｜C 自動承接歷史</b><p>切換居服員 C，點入同一個個案，即可看到 A、B 曾留下的所有交班紀錄。</p></div><div><b>03｜已讀留痕</b><p>新接班者看完後按「我已閱讀」，讓督導知道是否完成資訊確認。</p></div></section><div class="footer">安護交班 · 互動展示版本 1.0 · 未連接真實人事系統、照管平台或跨裝置資料庫</div></section></main>
+<section class="help" id="helpSection"><div><b>01｜A → B 交班</b><p>居服員 A 新增紀錄並儲存到個案底下，而非只傳給特定同事。</p></div><div><b>02｜C 自動承接歷史</b><p>切換居服員 C，點入同一個個案，即可看到 A、B 曾留下的所有交班紀錄。</p></div><div><b>03｜已讀留痕</b><p>新接班者看完後按「我已閱讀」，讓督導知道是否完成資訊確認。</p></div></section><div class="footer">安護交班 · 互動展示版本 1.1（手機操作優化） · 未連接真實人事系統、照管平台或跨裝置資料庫</div></section></main>
 </div>
 <div class="modal-backdrop" id="modalBackdrop" role="presentation"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><h2 id="modalTitle">新增交班紀錄</h2><div class="modal-desc" id="modalDesc">將內容存放在個案的交班歷程中，後續被指派的居服員亦能查看。</div><form id="recordForm"><div class="form-grid"><div class="field"><label for="kind">交班類型</label><select id="kind" required><option value="日常照顧">日常照顧</option><option value="環境與安全">環境與安全</option><option value="生活習慣">生活習慣</option><option value="家屬溝通">家屬溝通</option><option value="異常狀況">異常狀況</option><option value="服務調整">服務調整</option></select></div><div class="field"><label for="risk">重要程度</label><select id="risk"><option value="一般">一般資訊</option><option value="提醒">需要留意</option><option value="緊急">重大異常・需立即聯絡督導</option></select></div></div><div class="field"><label for="summary">交班主旨 *</label><input id="summary" maxlength="70" required placeholder="例：浴室地墊濕滑，需特別注意"/></div><div class="field"><label for="description">交班內容與具體做法 *</label><textarea id="description" required minlength="8" maxlength="1500" placeholder="請寫清楚：發現什麼？已如何處理？下一班要注意什麼？\n避免只寫「同前」或無法操作的模糊描述。"></textarea><div class="hint">以客觀事實記載，勿輸入與服務無關的個人資訊。</div></div><div class="field"><label for="expires">提醒有效期限（選填）</label><input id="expires" type="date"/><div class="hint">臨時事項可設定期限；逾期仍保留歷程，但不再顯示為待處理提醒。</div></div><label class="checkboxline hidden" id="urgentLine"><input type="checkbox" id="urgentConfirmed"/><span>我確認已另行依機構流程即時聯繫督導／主管；此處僅做補充紀錄，不能取代即時通報。</span></label><div class="modal-footer"><button type="button" class="btn ghost" id="cancelModal">取消</button><button class="btn" type="submit">儲存這筆交班</button></div></form></div></div>
 <div class="toast" role="status" id="toast"></div>
@@ -69,14 +140,14 @@ $('detail').innerHTML=`<div class="detail-head"><div><div class="eyebrow">個案
 <section class="panel record-panel"><div class="section-title"><div><h3>交班紀錄歷程 <span class="micro">（${recs.length} 筆）</span></h3><p>依時間排序；後續新居服員可直接查閱</p></div>${isUnread?'<span class="badge unread">尚未確認閱讀</span>':'<span class="badge read">已完成閱讀</span>'}</div><div class="tabs"><button data-tab="all" class="${tab==='all'?'active':''}">所有紀錄</button><button data-tab="risk" class="${tab==='risk'?'active':''}">重要提醒</button></div><div class="timeline">${recs.filter(r=>tab==='all'||r.risk!=='一般').map((r,i)=>`<article class="entry ${i===0?'latest':''}"><div class="entry-top"><strong>${esc(r.summary)}</strong><span class="date">${datefmt(r.createdAt)}</span></div><div class="entry-badges"><span class="badge neutral">${esc(r.kind)}</span>${r.risk==='提醒'?'<span class="badge unread">需留意</span>':r.risk==='緊急'?'<span class="badge risk">重大異常</span>':''}${r.expires?`<span class="badge neutral">提醒至 ${esc(r.expires)}${isUnexpired(r)?'':'（已到期）'}</span>`:''}</div><span class="label">交班內容</span><p>${esc(r.description)}</p><div class="entry-footer"><span>記錄人：${esc(users[r.author]||'其他人員')}</span><span>原始紀錄保留 · 不直接覆寫</span></div></article>`).join('')||'<div class="empty">目前沒有符合類別的紀錄</div>'}</div><div class="action-row"><div class="micro">紀錄閱讀狀態以個案最新一筆交班為準</div>${isUnread?'<button class="btn" id="readBtn">✓ 我已閱讀交班紀錄</button>':'<span class="all-read">✓ 目前最新交班已確認</span>'}</div></section>`;
 $('newBtn').addEventListener('click',openModal);const rb=$('readBtn');if(rb)rb.addEventListener('click',()=>{data.reads[actor+'|'+c.id]=now();if(save()){render();toast('已記錄 '+users[actor]+' 的閱讀確認')}});document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{tab=el.dataset.tab;renderDetail()}));}
 function toast(m){const el=$('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000)}
-function openModal(){if(!current)return;$('recordForm').reset();$('modalDesc').textContent='個案：'+cases.find(c=>c.id===current).name+'｜記錄人：'+users[actor]+'。交班會保留在個案歷程，不必指定只給某一位居服員。';$('modalBackdrop').classList.add('open');$('summary').focus();showUrgent()}
-function closeModal(){$('modalBackdrop').classList.remove('open')}
+function openModal(){if(!current)return;document.body.classList.add('modal-open');$('recordForm').reset();$('modalDesc').textContent='個案：'+cases.find(c=>c.id===current).name+'｜記錄人：'+users[actor]+'。交班會保留在個案歷程，不必指定只給某一位居服員。';$('modalBackdrop').classList.add('open');$('summary').focus();showUrgent()}
+function closeModal(){$('modalBackdrop').classList.remove('open');document.body.classList.remove('modal-open')}
 function showUrgent(){$('urgentLine').classList.toggle('hidden',$('risk').value!=='緊急')}
 $('risk').addEventListener('change',showUrgent);$('cancelModal').addEventListener('click',closeModal);$('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 $('recordForm').addEventListener('submit',e=>{e.preventDefault();if(!current||!visibleCases().some(c=>c.id===current)){alert('目前沒有本個案閱覽權限。');return}if($('risk').value==='緊急'&&!$('urgentConfirmed').checked){alert('重大異常應先依機構程序即時通知督導，再勾選確認並留存紀錄。');return}
 const r={id:'R-'+Date.now(),caseId:current,author:actor,kind:$('kind').value,risk:$('risk').value,summary:$('summary').value.trim(),description:$('description').value.trim(),expires:$('expires').value,createdAt:now()};if(!r.summary||r.description.length<8){alert('請完整填寫交班主旨與內容（至少 8 字）。');return}data.records.push(r);if(save()){tab='all';closeModal();render();toast('已儲存交班，後續被指派人員可查閱（限此瀏覽器展示）')}});
 $('actorSelect').addEventListener('change',e=>{actor=e.target.value;filter='all';tab='all';document.querySelectorAll('[data-filter]').forEach(el=>el.classList.toggle('active',el.dataset.filter===filter));$('searchInput').value='';const access=visibleCases();if(!access.some(c=>c.id===current))current=access[0]?.id||null;render();toast('已切換展示身分：'+users[actor])});
-$('caseList').addEventListener('click',e=>{const el=e.target.closest('[data-case]');if(!el)return;current=el.dataset.case;tab='all';render()});
+$('caseList').addEventListener('click',e=>{const el=e.target.closest('[data-case]');if(!el)return;current=el.dataset.case;tab='all';render();if(window.matchMedia('(max-width:750px)').matches){$('detail').scrollIntoView({behavior:'smooth',block:'start'})}});
 $('searchInput').addEventListener('input',render);document.querySelectorAll('[data-filter]').forEach(el=>el.addEventListener('click',()=>{filter=el.dataset.filter;document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b===el));render()}));
 $('navCases').addEventListener('click',()=>{filter='all';document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));render();window.scrollTo({top:0,behavior:'smooth'})});
 $('navUnread').addEventListener('click',()=>{filter='unread';document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter==='unread'));render();window.scrollTo({top:0,behavior:'smooth'})});
