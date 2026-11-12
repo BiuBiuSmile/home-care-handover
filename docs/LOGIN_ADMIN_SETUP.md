@@ -1,66 +1,46 @@
-# 安護交班｜手機登入與管理員啟用教學
+# 安護交班｜手機簡訊登入與管理員啟用指南
 
-網站：`https://biubiusmile.github.io/home-care-handover/`
+本專案為 GitHub Pages + Supabase Auth + PostgreSQL。**使用者只需輸入手機號碼，收到簡訊後填寫 OTP 驗證碼，不需任何密碼或 Email。**
 
-本研究系統採 **台灣手機門號＋密碼**，不需要電子信箱。
-已上傳 GitHub 的程式為前端畫面，帳號驗證透過 Supabase Auth，所有個案存取由 PostgreSQL RLS 驗證。
+## 使用者登入方式
+1. 前往 `https://biubiusmile.github.io/home-care-handover/`
+2. 輸入台灣手機門號，例如 `0912345678`，系統轉為 `+886912345678`
+3. 點「傳送簡訊驗證碼」，收到 SMS 後輸入驗證碼
+4. 已核准的帳號登入工作台；第一次使用自動建立待審核帳號，須由管理員先啟用並指派個案
+5. 每次重新登入用 SMS OTP；若登入工作階段仍有效，可能不必重新驗證。可透過「登出」清除該瀏覽器登入狀態。
 
-## 已完成
-- GitHub Pages 網站程式：`index.html`、`portal.js`、`config.js`
-- Supabase 專用資料庫：`profiles`、`cases`、`case_assignments`、`handovers`、`case_reads`
-- 帳號待審核與管理員授權規則
-- 新版手機門號登入、註冊、簡訊驗證碼頁面
-- 原展示版在 `demo.html`，與正式帳號資料無關
+### 必要的 Supabase 設定
+1. 開啟 [Supabase Phone Provider](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/auth/providers)。
+2. 在 **Authentication → Sign In / Providers → Phone** 啟用 Phone。
+3. 設定簡訊供應商及發送憑證（如 Twilio、Vonage、MessageBird，依 Dashboard 可用項目），確認能送達台灣門號。供應商可能依簡訊計價。
+4. 配置合適的 OTP 速率限制與 CAPTCHA，避免大量發送簡訊及費用濫用。
+5. 研究期間可依 [官方測試門號指南](https://supabase.com/docs/guides/auth/testing-auth-flows) 設定虛構門號＋固定 OTP；託管 Supabase 仍要求配置 SMS 供應商。**正式使用前務必移除測試門號與固定驗證碼。**
 
-## 第一步：開啟 Phone 登入及驗證簡訊
+**重要：手機號碼不能單獨證明身分。** SMS 驗證是必要步驟；未通過驗證的帳號不能取得個案資料權限。
 
-1. 開啟 Supabase Dashboard → Authentication → Sign In / Providers。
-2. 點選 **Phone**，將 Enable Phone provider 開啟。
-3. 設定簡訊供應商（依介面支援清單，例如 Twilio、Vonage、MessageBird 等），填寫由供應商提供的必要資訊。
-4. **啟用手機號碼驗證**，不要為了省簡訊而關掉驗證程序；此步驟涉及個案紀錄權限。
-5. Save 儲存。簡訊費通常由供應商收取；沒有供應商不會真正發送註冊簡訊。
-6. 研究測試也可依 [Supabase 官方測試門號教學](https://supabase.com/docs/guides/auth/testing-auth-flows) 使用測試門號＋固定 OTP，但 Supabase 對託管專案仍要求設定 SMS provider；測試門號**不可用於正式營運**。
-
-官方文件：[Phone login](https://supabase.com/docs/guides/auth/phone-login)／[Password with phone](https://supabase.com/docs/guides/auth/passwords)
-
-## 第二步：註冊第一位帳號
-
-1. 進入網站首頁（`index.html`），選「申請新帳號」。
-2. 填寫姓名、台灣手機門號，例如 `0912345678`，以及密碼。
-3. 系統會自動將台灣門號轉為國際格式，例如 `+886912345678`。
-4. 收到簡訊後輸入驗證碼，完成門號驗證。
-5. 新帳號會先是 `staff`、`active=false`，無法讀取任何個案資訊。
-
-## 第三步：開啟第一位管理員
-
-前往 Supabase → SQL Editor，將以下 SQL 中的 **範例門號** 換成「你剛註冊且已驗證」的實際門號（以 `+886` 格式）。不要在 ChatGPT 貼密碼或驗證碼。
+## 建立第一位管理員
+1. 使用自己的手機號碼在網站接收並完成 SMS 驗證。
+2. 新帳號起初 `active=false`、角色 `staff`，不可查看任何個案。
+3. 在 [SQL Editor](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/sql/new) 執行下列 SQL，將範例門號換成**自己剛驗證的**手機號碼國際格式。不要提供密碼或驗證碼給他人。
 
 ```sql
 update public.profiles
-set role = 'admin', active = true
+set role = 'admin', active = true,
+    display_name = '最高權限管理員'
 where id = (
   select id from auth.users
   where phone = '+886912345678'
     and phone_confirmed_at is not null
-);
+)
+returning id, display_name, role, active;
 ```
 
-執行後，**只要更新 1 列** 才表示成功。若顯示 0 列，先檢查門號格式、註冊是否完成以及簡訊是否驗證。
+回傳 **1 列**才表示有成功啟用該管理員帳號；0 列代表手機號碼或驗證狀態不符合。完成後重新登入就能看到管理員後台。
 
-重新登入網站，會看到「管理員後台」。
+管理員可在後台替其他已驗證門號的使用者填寫姓名、核准帳號、設定角色及指派個案。
 
-## 第四步：管理員功能
-
-- 啟用或停用新帳號；角色：管理員 / 居督 / 居服員。
-- 建立／修改個案及固定照顧重點。
-- 指派／取消居服員與督導可閱覽的個案。
-- 經授權的服務人員可以新增交班、查閱歷史交班、確認已讀。
-- 未被指派或未啟用人員不可查閱交班資料。
-
-## 注意事項
-
-- 手機號碼＋密碼 **不等同於免驗證**。首次需確認門號持有者，建議進一步使用 MFA；手機門號可能遭回收或換號。
-- 長照個案資料涉及敏感資料，正式使用前必須進行資安、適法性、備份、稽核、帳號復原與離職撤權等完整檢查。
-- 目前網頁尚無「忘記密碼／門號更換」完整流程；請先以虛構個案測試。
-- 不要把 Twilio Auth Token、Supabase service_role、私密金鑰、資料庫密碼、簡訊驗證碼放到 GitHub 或提供給他人。
-- 先不需要再設定電子郵件註冊。Authentication 的 Site URL/Redirect URLs 可保留不動。
+## 安全注意
+- 簡訊 OTP 不等於多因素驗證（MFA）；手機號碼可能換人或遭 SIM 交換攻擊。正式上線需評估管理員額外 MFA、登入時效、裝置安全及異常監控。
+- 需要簡訊供應商才能實際發送驗證碼。未配置前，網站雖可開啟，不能完成手機登入。
+- 簡訊供應商金鑰、Supabase Secret/Service Role、資料庫密碼不得放在 GitHub 或前端。
+- 正式處理長照個案健康資訊前，需完成個資適法性、權限稽核、離職撤權、資料備份、資安測試。
