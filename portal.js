@@ -175,6 +175,11 @@
      const user=(await checkQuery(userResult,'取得身分'))?.user;
      if(!user){show('authScreen');return;}
      state.user=user;
+     if(user.phone && !user.phone_confirmed_at){
+       $('pendingTitle').textContent='手機門號尚未驗證';
+       $('pendingMessage').textContent='目前門號尚未完成簡訊驗證，暫時不能查閱任何個案資訊。請先完成驗證，必要時聯絡管理員確認 Phone 簡訊服務設定。';
+       show('pendingScreen');return;
+     }
      const r=await state.db.from('profiles').select('id,display_name,role,active').eq('id',user.id).single();
      state.profile=await checkQuery(r,'取得帳號權限');
      if(!state.profile.active){
