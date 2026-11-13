@@ -103,7 +103,7 @@
    const confirm=$('confirmPassword').value;
    const box=$('changeMessage');
    const fail=m=>{box.textContent=m;box.className='msg error'};
-   if(password.length<12 || password.length>72)return fail('新密碼請設定 12～72 個字元');
+   if(password.length<10 || password.length>72)return fail('新密碼請設定 10～72 個字元');
    if(password!==confirm)return fail('兩次輸入的新密碼不一致');
    if(/^[a-z][12]\d{8}$/i.test(password))return fail('新密碼不能使用身分證字號');
    const form=$('changePasswordForm');setBusy(form,true);
