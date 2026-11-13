@@ -111,6 +111,26 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   </section>
  </main>
 </section>
+<div id="deleteUserLayer" class="dialog-layer" hidden>
+ <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="deleteUserTitle">
+  <h2 id="deleteUserTitle">刪除使用者帳號</h2>
+  <div class="msg error">
+   <strong>這項操作無法復原</strong>
+   <p class="help" style="color:inherit;margin-bottom:0">刪除後，該人員不能再登入；個案指派與已讀紀錄將一併移除。過去已建立的交班內容及紀錄人姓名會保留供追溯。</p>
+  </div>
+  <p>確定刪除 <strong id="deleteUserName"></strong> 的帳號嗎？</p>
+  <form id="deleteUserForm" autocomplete="off">
+   <div class="field">
+    <label for="deleteUserConfirm">請輸入「刪除」以確認</label>
+    <input id="deleteUserConfirm" type="text" required autocomplete="off" placeholder="刪除" spellcheck="false" inputmode="text">
+   </div>
+   <footer>
+    <button class="btn alt" type="button" id="cancelDeleteUser">取消</button>
+    <button class="btn warn" type="submit" id="confirmDeleteUser" disabled>永久刪除帳號</button>
+   </footer>
+  </form>
+ </section>
+</div>
 <div id="resetPasswordLayer" class="dialog-layer" hidden>
  <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="resetPasswordTitle">
   <h2 id="resetPasswordTitle">管理員重設員工密碼</h2>
