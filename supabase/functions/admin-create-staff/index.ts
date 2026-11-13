@@ -25,11 +25,11 @@ function normalizePhone(value: unknown) {
   return null;
 }
 
-function passwordError(value: unknown, phone?: string | null): string | null {
+function passwordError(value: unknown, phone?: string | null, allowNationalId = false): string | null {
   if (typeof value !== "string") return "請輸入密碼";
   if (value.length < 10 || value.length > 72) return "密碼長度須為 10～72 字元";
   if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) return "密碼至少要包含英文字母與數字";
-  if (/^[A-Za-z][12]\d{8}$/.test(value)) return "請勿以身分證字號作為密碼";
+  if (!allowNationalId && /^[A-Za-z][12]\d{8}$/.test(value)) return "新增帳號時不允許以身分證字號作為密碼";
   if (phone && (value.includes(phone.slice(-9)) || value.includes("0" + phone.slice(-9)))) {
     return "密碼不能包含自己的手機號碼";
   }
@@ -119,7 +119,7 @@ Deno.serve(async (req: Request) => {
       }
       const { data: authUser, error: lookupError } = await db.auth.admin.getUserById(id);
       if (lookupError || !authUser.user) return reply(404, "員工登入帳號不存在");
-      const issue = passwordError(password, authUser.user.phone);
+      const issue = passwordError(password, authUser.user.phone, true);
       if (issue) return reply(400, issue);
       const { error: updateError } = await db.auth.admin.updateUserById(id, { password });
       if (updateError) return reply(400, "密碼更新失敗，請確認密碼符合系統設定");
