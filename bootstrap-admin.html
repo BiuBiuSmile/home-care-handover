@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>安護交班｜首次管理員初始化</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#102b3d;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif;color:#173647;padding:16px}.panel{background:#fff;padding:26px;border-radius:20px;width:min(100%,410px);box-sizing:border-box}h1{font-size:22px}label{display:block;font-size:14px;font-weight:700;margin-top:12px}input{box-sizing:border-box;margin-top:6px;padding:12px;border-radius:9px;border:1px solid #bccbd3;width:100%;font-size:16px}button{background:#0b8075;color:white;border:0;border-radius:9px;padding:13px 16px;font-weight:700;width:100%;margin-top:18px;font-size:16px}.help{line-height:1.7;font-size:13px;color:#5b7080}#result{line-height:1.6;color:#9f3630}</style></head>
+<body><section class="panel"><h1>管理員首次初始化</h1><p class="help">僅供專案負責人第一次設定使用。請先在 Supabase Dashboard 建立並確認臨時管理員電子信箱帳號，再在 SQL Editor 核准該帳號。後續正式使用請改為手機號碼登入。</p>
+<form id="f"><label for="email">臨時管理員 Email</label><input id="email" type="email" autocomplete="username" required><label for="password">臨時管理員密碼</label><input id="password" type="password" autocomplete="current-password" required><button id="submit">登入並前往設定新密碼</button></form><p id="result" role="status"></p><p class="help">本頁不提供帳號註冊；未經核准的使用者無法取得個案資訊。完成手機管理員建檔後，請移除此初始化入口及臨時帳號。</p>
+</section>
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+'use strict';
+const c=window.CARE_CONFIG||{};
+if(!c.SUPABASE_URL || !c.SUPABASE_ANON_KEY || !window.supabase?.createClient){document.getElementById('result').textContent='Supabase 尚未完成連接';document.getElementById('submit').disabled=true;}
+else {
+ const db=window.supabase.createClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+ document.getElementById('f').addEventListener('submit', async e=>{
+   e.preventDefault();const b=document.getElementById('submit');b.disabled=true;
+   try{
+     const {error}=await db.auth.signInWithPassword({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value});
+     if(error)throw error;
+     document.getElementById('password').value='';
+     window.location.replace('./');
+   }catch{document.getElementById('result').textContent='登入失敗：請檢查 Email、密碼與 Supabase 帳號驗證狀態';}
+   finally{b.disabled=false}
+ });
+}
+</script></body></html>
