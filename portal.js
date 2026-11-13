@@ -136,10 +136,10 @@
    }catch(error){fail(errText(error))}
    finally{setBusy(form,false)}
  }
- function validateManagerPassword(password,phone){
+ function validateManagerPassword(password,phone,allowNationalId=false){
    if(password.length<10||password.length>72)return '密碼須為 10～72 字元';
    if(!/[A-Za-z]/.test(password)||!/[0-9]/.test(password))return '密碼須包含英文字母與數字';
-   if(/^[A-Za-z][12]\d{8}$/.test(password))return '請勿使用身分證字號當密碼';
+   if(!allowNationalId && /^[A-Za-z][12]\d{8}$/.test(password))return '新增帳號時不允許使用身分證字號作為密碼';
    if(phone && (password.includes(phone.slice(-9))||password.includes('0'+phone.slice(-9))))return '密碼不能包含員工手機號碼';
    return '';
  }
@@ -246,7 +246,7 @@
    const target=state.profiles.find(x=>x.id===state.resetTarget);
    if(!target||!['staff','supervisor'].includes(target.role))return notify('無法重設這個帳號',true);
    const password=$('resetPassword').value,confirm=$('resetPasswordConfirm').value;
-   const issue=validateManagerPassword(password);
+   const issue=validateManagerPassword(password,null,true);
    if(issue)return notify(issue,true);
    if(password!==confirm)return notify('兩次輸入的密碼不一致',true);
    const form=$('resetPasswordForm'),user_id=state.resetTarget;
