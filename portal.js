@@ -275,6 +275,7 @@
  async function setSession(session){
    if(!session?.user){
      window.CareCollab?.destroy();
+     window.HandoverRooms?.destroy();
      state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
      state.current=null;state.caseOpen=false;state.casePage=1;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -282,6 +283,7 @@
    }
    if(state.user?.id!==session.user.id){
      window.CareCollab?.destroy();
+     window.HandoverRooms?.destroy();
      state.cases=[];state.records=[];state.reads=[];state.current=null;
      state.caseOpen=false;state.casePage=1;state.browserScroll=0;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -318,7 +320,7 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {state.user=null;state.profile=null;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
    if(tab==='admin'&&!canAdmin())return;
@@ -368,6 +370,7 @@
    $('caseBrowser').hidden=false;
    $('caseFocus').hidden=true;
    window.CareCollab?.destroy();
+   window.HandoverRooms?.destroy();
    renderCaseList();
    window.requestAnimationFrame(()=>window.scrollTo(0,state.browserScroll||0));
  }
@@ -459,6 +462,7 @@
      '<div class="care-tabs" role="tablist" aria-label="個案交班功能">'+
        '<button class="care-tab active" data-care-tab="guide" role="tab" aria-selected="true" type="button">照顧檔案</button>'+
        '<button class="care-tab" data-care-tab="discussion" role="tab" aria-selected="false" type="button">交班討論</button>'+
+       '<button class="care-tab" data-care-tab="rooms" role="tab" aria-selected="false" type="button">24 小時臨時交班室</button>'+
        '<button class="care-tab" data-care-tab="history" role="tab" aria-selected="false" type="button">正式交班 <span class="care-tab-count">'+rec.length+'</span></button>'+
      '</div>'+
      '<section data-care-panel="guide" class="care-tab-panel">'+
@@ -488,6 +492,7 @@
          '<div class="care-form-actions"><span class="help">討論內容不會自動變成正式照顧指示。</span><button class="btn" id="discussionSendBtn" type="submit">送出討論</button></div>'+
        '</form>'+
      '</section>'+
+     '<section data-care-panel="rooms" class="care-tab-panel" id="tempRoomsPanel" hidden><div id="tempRoomRoot"></div></section>'+
      '<section data-care-panel="history" class="care-tab-panel" hidden>'+
        '<div class="toolbar care-history-header"><div><h3>正式交班歷史（'+rec.length+' 筆）</h3><p class="help">按建立時間排序；原始紀錄保留，不允許一般使用者任意編輯或刪除。</p></div>'+
          '<div class="action-inline"><button type="button" id="newHandoverBtn" class="btn">＋ 新增正式交班</button></div></div>'+
@@ -499,6 +504,10 @@
    if($('readCaseBtn'))$('readCaseBtn').addEventListener('click',markRead);
    if(window.CareCollab){
       window.CareCollab.mount({db:state.db,caseId:c.id,profile:state.profile}).catch(e=>notify('載入交班討論失敗：'+errText(e),true));
+   }
+   if(window.HandoverRooms){
+      window.HandoverRooms.mount({db:state.db,caseId:c.id,profile:state.profile,user:state.user})
+        .catch(e=>notify('載入臨時交班室失敗：'+errText(e),true));
    }
  }
  function openHandover(){if(!selectedCase())return;$('handoverForm').reset();$('handoverTitle').textContent='新增交班｜'+selectedCase().name;$('handoverLayer').hidden=false;document.body.style.overflow='hidden';$('recordSummary').focus()}
