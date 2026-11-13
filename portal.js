@@ -274,12 +274,14 @@
  }
  async function setSession(session){
    if(!session?.user){
+     window.CareCollab?.destroy();
      state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
      state.current=null;state.caseOpen=false;state.casePage=1;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
      show('authScreen');return;
    }
    if(state.user?.id!==session.user.id){
+     window.CareCollab?.destroy();
      state.cases=[];state.records=[];state.reads=[];state.current=null;
      state.caseOpen=false;state.casePage=1;state.browserScroll=0;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -365,6 +367,7 @@
    state.caseOpen=false;
    $('caseBrowser').hidden=false;
    $('caseFocus').hidden=true;
+   window.CareCollab?.destroy();
    renderCaseList();
    window.requestAnimationFrame(()=>window.scrollTo(0,state.browserScroll||0));
  }
@@ -448,12 +451,55 @@
      return '<article class="record"><div class="record-head"><strong>'+esc(r.summary)+' '+badge+'</strong><small>'+when(r.created_at)+'</small></div><small>'+esc(r.kind)+'｜記錄人：'+esc(r.author_name)+'</small><p>'+esc(r.description)+'</p>'+(r.expires_on?'<small>提醒期限：'+esc(r.expires_on)+'</small>':'')+'</article>';
    }).join('');
    const focusHtml=focus.map(item=>'<div class="focus-item"><strong>'+esc(Array.isArray(item)?item[0]:item?.title)+'</strong>'+esc(Array.isArray(item)?item[1]:item?.body)+'</div>').join('');
-   root.innerHTML='<div class="toolbar"><div><h2>'+esc(c.name)+'</h2><div class="help">'+esc(c.id)+' · '+esc(c.area)+'｜'+esc(c.service)+'</div><div class="help">服務狀態：'+esc(c.status||'未設定')+'｜主責督導：'+esc(c.supervisor_name||'未設定')+'｜主責居服員：'+esc(c.caregiver_name||'未設定')+'</div></div><button class="btn" type="button" id="newHandoverBtn">＋ 新增交班</button></div>'
-      +'<h3>固定照顧重點</h3>'+(focusHtml||'<p class="muted">尚未設定固定重點</p>')+(c.note?'<div class="msg error">'+esc(c.note)+'</div>':'')
-      +'<div class="toolbar" style="margin-top:21px"><h3>歷史交班（'+rec.length+' 筆）</h3><div class="action-inline">'+(isUnread(c)?'<span class="pill">有未讀紀錄</span><button class="btn alt" id="readCaseBtn" type="button">✓ 我已閱讀</button>':'<span class="pill ok">最新交班已讀</span>')+'</div></div>'
-      +'<div class="help">交班依建立時間排序；原始紀錄不允許從使用者端修改或刪除。</div>'+(rlist||'<p class="muted">目前尚無交班紀錄。</p>');
+   root.innerHTML=
+     '<div class="toolbar care-case-header"><div><h2>'+esc(c.name)+'</h2>'+
+     '<div class="help">'+esc(c.id)+' · '+esc(c.area)+'｜'+esc(c.service)+'</div>'+
+     '<div class="help">服務狀態：'+esc(c.status||'未設定')+'｜主責督導：'+esc(c.supervisor_name||'未設定')+'｜主責居服員：'+esc(c.caregiver_name||'未設定')+'</div></div>'+
+     '<span class="care-case-hint">已指派的人員可共同交班</span></div>'+
+     '<div class="care-tabs" role="tablist" aria-label="個案交班功能">'+
+       '<button class="care-tab active" data-care-tab="guide" role="tab" aria-selected="true" type="button">照顧檔案</button>'+
+       '<button class="care-tab" data-care-tab="discussion" role="tab" aria-selected="false" type="button">交班討論</button>'+
+       '<button class="care-tab" data-care-tab="history" role="tab" aria-selected="false" type="button">正式交班 <span class="care-tab-count">'+rec.length+'</span></button>'+
+     '</div>'+
+     '<section data-care-panel="guide" class="care-tab-panel">'+
+       '<div class="care-section-head"><div><h3>原有固定照顧重點</h3><p>由管理員在個案資料中維護，供新接班者快速閱讀。</p></div></div>'+
+       '<div class="care-entry-grid">'+(focusHtml||'<p class="care-empty">尚未設定原有固定重點。</p>')+'</div>'+
+       (c.note?'<div class="msg error">'+esc(c.note)+'</div>':'')+
+       '<div id="careGuideResults"><p class="care-empty">正在載入照顧重點…</p></div>'+
+       '<section class="care-input-panel"><h3>＋ 提交新的照顧重點</h3><p class="help">已指派的居服員可提出日常照顧建議。經居督或管理員審核後才列入正式照顧重點。</p>'+
+         '<form id="careGuideForm">'+
+           '<div class="split"><div class="field"><label for="guideCategory">重點類別</label><select id="guideCategory" required><option>生活習慣</option><option>備餐與飲食</option><option>移位與安全</option><option>沐浴清潔</option><option>溝通與家屬</option><option>其他</option></select></div>'+
+           '<div class="field"><label for="guideTitle">重點標題</label><input id="guideTitle" required minlength="2" maxlength="100" placeholder="例如：洗澡前先確認防滑椅"></div></div>'+
+           '<div class="field"><label for="guideDetail">具體照顧方式與注意事項</label><textarea id="guideDetail" required minlength="5" maxlength="2000" rows="4" placeholder="描述已確認的照顧習慣與注意事項。請只填必要資訊，不輸入身分證、電話等非必要個資。"></textarea></div>'+
+           '<div id="guideNotice" class="care-notice" role="status" hidden></div>'+
+           '<div class="care-form-actions"><button class="btn" id="guideSaveBtn" type="submit">提交重點給居督確認</button></div>'+
+         '</form></section>'+
+     '</section>'+
+     '<section data-care-panel="discussion" id="careDiscussionPanel" class="care-tab-panel" hidden>'+
+       '<div class="care-section-head"><div><h3>個案交班討論 <span class="care-count" id="discussionCount">0 則討論</span></h3><p>向同一個案的已指派同仁發問或回覆；原始對話會保留，後續代班者可查閱。</p></div><button class="btn alt care-mini" id="refreshDiscussionBtn" type="button">↻ 更新對話</button></div>'+
+       '<div class="care-urgent-note">注意：急迫異常、跌倒受傷或服務安全事件，仍須依機構規定立即聯絡督導，不得僅在討論區留言。</div>'+
+       '<div id="careDiscussionList" class="care-discussion-list"><p class="care-empty">正在載入討論…</p></div>'+
+       '<form id="careDiscussionForm" class="care-chat-form">'+
+         '<h4>新增交班討論</h4><div id="discussionReply" class="care-reply-quote" hidden></div>'+
+         '<div class="split"><div class="field"><label for="discussionType">訊息類型</label><select id="discussionType"><option>問題</option><option>回覆</option><option>補充</option></select></div>'+
+         '<div class="field care-reply-cancel"><label>回覆設定</label><button class="btn alt" id="discussionCancelReply" type="button">取消指定回覆</button></div></div>'+
+         '<div class="field"><label for="discussionBody">交班內容</label><textarea id="discussionBody" minlength="2" maxlength="3000" rows="4" required placeholder="例如：明天代班想確認個案沐浴時是否需要使用防滑椅？"></textarea></div>'+
+         '<div id="discussionNotice" class="care-notice" role="status" hidden></div>'+
+         '<div class="care-form-actions"><span class="help">討論內容不會自動變成正式照顧指示。</span><button class="btn" id="discussionSendBtn" type="submit">送出討論</button></div>'+
+       '</form>'+
+     '</section>'+
+     '<section data-care-panel="history" class="care-tab-panel" hidden>'+
+       '<div class="toolbar care-history-header"><div><h3>正式交班歷史（'+rec.length+' 筆）</h3><p class="help">按建立時間排序；原始紀錄保留，不允許一般使用者任意編輯或刪除。</p></div>'+
+         '<div class="action-inline"><button type="button" id="newHandoverBtn" class="btn">＋ 新增正式交班</button></div></div>'+
+       '<div class="toolbar care-read-toolbar"><span class="help">代班者完成查閱後，請手動確認已讀。</span>'+
+         (isUnread(c)?'<button class="btn alt" id="readCaseBtn" type="button">✓ 我已閱讀正式交班</button>':'<span class="pill ok">最新正式交班已讀</span>')+'</div>'+
+       (rlist||'<p class="care-empty">目前尚無正式交班紀錄。</p>')+
+     '</section>';
    $('newHandoverBtn').addEventListener('click',openHandover);
    if($('readCaseBtn'))$('readCaseBtn').addEventListener('click',markRead);
+   if(window.CareCollab){
+      window.CareCollab.mount({db:state.db,caseId:c.id,profile:state.profile}).catch(e=>notify('載入交班討論失敗：'+errText(e),true));
+   }
  }
  function openHandover(){if(!selectedCase())return;$('handoverForm').reset();$('handoverTitle').textContent='新增交班｜'+selectedCase().name;$('handoverLayer').hidden=false;document.body.style.overflow='hidden';$('recordSummary').focus()}
  function closeHandover(){$('handoverLayer').hidden=true;document.body.style.overflow=''}
