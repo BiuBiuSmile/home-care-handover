@@ -7,6 +7,7 @@ create table public.profiles (
   display_name text not null default '',
   role text not null default 'staff' check (role in ('admin','supervisor','staff')),
   active boolean not null default false,
+  must_change_password boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -26,16 +27,28 @@ for each row execute function public.on_user_registered();
 
 create or replace function public.is_active()
 returns boolean language sql stable security definer set search_path = '' as $$
-  select exists(select 1 from public.profiles p join auth.users u on u.id = p.id
-    where p.id = auth.uid() and p.active and u.phone_confirmed_at is not null);
+  select exists(select 1 from public.profiles p join auth.users u on u.id=p.id
+    where p.id=auth.uid() and p.active and not p.must_change_password and u.confirmed_at is not null);
 $$;
 
 create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path = '' as $$
-  select exists(select 1 from public.profiles p join auth.users u on u.id = p.id
-    where p.id = auth.uid() and p.active and p.role = 'admin'
-      and u.phone_confirmed_at is not null);
+  select exists(select 1 from public.profiles p join auth.users u on u.id=p.id
+    where p.id=auth.uid() and p.active and p.role='admin'
+    and not p.must_change_password and u.confirmed_at is not null);
 $$;
+
+create or replace function public.on_auth_password_changed()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.encrypted_password is distinct from old.encrypted_password then
+    update public.profiles set must_change_password=false where id=new.id;
+  end if;
+  return new;
+end; $$;
+create trigger on_auth_user_password_changed
+after update of encrypted_password on auth.users
+for each row execute function public.on_auth_password_changed();
 
 create table public.cases (
   id text primary key check (length(trim(id)) between 2 and 40),
@@ -189,6 +202,7 @@ for each row execute function public.guard_admin_updates();
 
 -- Remove inherited PUBLIC EXECUTE privileges on SECURITY DEFINER helpers.
 revoke execute on function public.on_user_registered() from public, anon, authenticated;
+revoke execute on function public.on_auth_password_changed() from public, anon, authenticated;
 revoke execute on function public.stamp_handover_author() from public, anon, authenticated;
 revoke execute on function public.guard_admin_updates() from public, anon, authenticated;
 revoke execute on function public.is_active() from public, anon, authenticated;
