@@ -9,7 +9,7 @@
   const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const fmt=value=>value?new Date(value).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'';
   const categories=['生活習慣','備餐與飲食','移位與安全','沐浴清潔','溝通與家屬','其他'];
-  const state={db:null,caseId:null,profile:null,guide:[],messages:[],replyTo:null,loadId:0,timer:null,panel:'guide',loaded:false};
+  const state={db:null,caseId:null,profile:null,guide:[],focus:[],note:'',messages:[],replyTo:null,loadId:0,timer:null,panel:'guide',loaded:false};
   function setNotice(text,isError=false,section='guide'){
     const e=$(section==='guide'?'guideNotice':'discussionNotice');
     if(!e)return;
@@ -22,25 +22,56 @@
   function reviewedByAllowed(){return ['admin','supervisor'].includes(state.profile?.role)}
   function clearTimer(){if(state.timer!==null){clearInterval(state.timer);state.timer=null}}
   function destroy(){
-    clearTimer();state.loadId++;state.caseId=null;state.guide=[];state.messages=[];state.replyTo=null;state.loaded=false;
+    clearTimer();state.loadId++;state.caseId=null;state.guide=[];state.focus=[];state.note='';state.messages=[];state.replyTo=null;state.loaded=false;
   }
   function guideHtml(){
-    const pending=state.guide.filter(x=>x.status==='pending');
+    const fixed=state.focus.map(item=>{
+      const title=Array.isArray(item)?item[0]:item?.title;
+      const detail=Array.isArray(item)?item[1]:item?.body;
+      return '<article class="care-entry care-entry--fixed"><div class="care-entry-header">'+
+        '<span class="care-status-tag fixed">固定</span></div>'+
+        '<h4>'+esc(title||'照顧重點')+'</h4><p>'+esc(detail||'')+'</p>'+
+        '<div class="care-entry-footer">原有固定重點 · 管理員維護</div></article>';
+    });
+    if(state.note){
+      fixed.push('<article class="care-entry care-entry--note">'+
+        '<div class="care-entry-header"><span class="care-status-tag alert">重要提醒</span></div>'+
+        '<h4>個案注意事項</h4><p>'+esc(state.note)+'</p>'+
+        '<div class="care-entry-footer">原有個案提醒</div></article>');
+    }
+    const row=(item)=>{
+      const status=item.status==='approved'?'已確認':item.status==='pending'?'待確認':'已退回';
+      const cls=item.status==='approved'?'approved':item.status==='pending'?'pending':'rejected';
+      const controls=item.status==='pending'&&reviewedByAllowed()
+        ? '<div class="care-review-actions"><button class="btn care-mini" data-guide-review="'+esc(item.id)+'" data-guide-status="approved" type="button">✓ 確認</button>'+
+            '<button class="btn alt care-mini" data-guide-review="'+esc(item.id)+'" data-guide-status="rejected" type="button">退回</button></div>'
+        : '';
+      return '<article class="care-entry care-entry--'+cls+'">'+
+        '<div class="care-entry-header"><div class="care-tags"><span class="care-status-tag '+cls+'">'+status+'</span>'+
+        '<span class="care-category">'+esc(item.category)+'</span></div>'+
+        '<time class="care-entry-date">'+fmt(item.created_at)+'</time></div>'+
+        '<h4>'+esc(item.title)+'</h4><p>'+esc(item.detail)+'</p>'+
+        '<div class="care-entry-footer"><span>提交：'+esc(item.author_name)+'</span>'+controls+'</div>'+
+        '</article>';
+    };
     const approved=state.guide.filter(x=>x.status==='approved');
+    const pending=state.guide.filter(x=>x.status==='pending');
     const rejected=state.guide.filter(x=>x.status==='rejected');
-    const row=(x,showControls)=>'<article class="care-entry">'+
-      '<div class="care-entry-header"><span class="care-category">'+esc(x.category)+'</span>'+
-      '<span class="care-entry-date">'+fmt(x.created_at)+'</span></div>'+
-      '<h4>'+esc(x.title)+'</h4><p>'+esc(x.detail)+'</p>'+
-      '<div class="care-entry-footer"><span>提交：'+esc(x.author_name)+' </span>'+
-      (showControls&&reviewedByAllowed()?'<div class="care-review-actions"><button class="btn care-mini" data-guide-review="'+esc(x.id)+'" data-guide-status="approved" type="button">✓ 審核通過</button><button class="btn alt care-mini" data-guide-review="'+esc(x.id)+'" data-guide-status="rejected" type="button">退回</button></div>':'')+
-      '</div></article>';
-    const approvedHtml=approved.length?approved.map(x=>row(x,false)).join(''):'<div class="care-empty">目前尚未有經確認的照顧重點。主責或已指派的居服員可先提交內容。</div>';
-    return '<div class="care-section-head"><div><h3>已確認的照顧重點 <span class="care-count">'+approved.length+'</span></h3><p>僅此區塊的內容視為本系統已確認的照顧參考；仍以核定服務計畫為準。</p></div><button type="button" class="btn alt care-mini" id="refreshGuideBtn">↻ 更新</button></div>'+
-      '<div class="care-entry-grid">'+approvedHtml+'</div>'+
-      '<div class="care-section-head care-subhead"><div><h3>待確認項目 <span class="care-count pending">'+pending.length+'</span></h3><p>居服員提交後，須由居督或管理員確認。未審核前請勿視為正式照顧指示。</p></div></div>'+
-      '<div class="care-entry-grid">'+(pending.length?pending.map(x=>row(x,true)).join(''):'<p class="care-empty">目前沒有待確認項目。</p>')+'</div>'+
-      (rejected.length?'<details class="care-rejected"><summary>查看已退回提案（'+rejected.length+'）</summary>'+rejected.map(x=>row(x,false)).join('')+'</details>':'');
+    const count=fixed.length+approved.length+pending.length+rejected.length;
+    if(!count)return '<div class="care-empty">目前尚無照顧重點，可由主責或已指派居服員點選「新增重點」提出內容。</div>';
+    return '<div class="care-unified-meta"><span>共 '+count+' 項照顧重點</span>'+
+      (pending.length?'<span class="care-pending-summary">待確認 '+pending.length+' 項</span>':'')+'</div>'+
+      '<div class="care-entry-grid care-unified-list">'+
+      [...fixed,...approved.map(row),...pending.map(row),...rejected.map(row)].join('')+
+      '</div>';
+  }
+  function showGuideEditor(show,focus=false){
+    const panel=$('careGuideEditor'),button=$('guideAddBtn');
+    if(!panel||!button)return;
+    panel.hidden=!show;
+    button.setAttribute('aria-expanded',String(show));
+    button.classList.toggle('active',show);
+    if(show&&focus){panel.scrollIntoView({behavior:'smooth',block:'nearest'});$('guideTitle')?.focus();}
   }
   function renderGuide(){
     const root=$('careGuideResults');if(!root)return;
@@ -124,6 +155,7 @@
       if(caseId!==state.caseId)return;
       $('careGuideForm').reset();
       await loadGuide();
+      showGuideEditor(false);
       setNotice('已送出照顧重點，待居督或管理員確認。');
     }catch(err){setNotice('送出失敗：'+errorText(err),true)}
     finally{btn.disabled=false}
@@ -169,6 +201,7 @@
     const m=state.messages.find(x=>String(x.id)===String(id));
     if(!m)return;
     changeTab('guide');
+    showGuideEditor(true);
     $('guideCategory').value='其他';
     $('guideTitle').value=('討論整理：'+m.body.split(/[\n。？！]/)[0]).slice(0,100);
     $('guideDetail').value=m.body.slice(0,2000);
@@ -177,12 +210,14 @@
     $('guideTitle').focus();
   }
   function bind(){
+    $('guideAddBtn').addEventListener('click',()=>showGuideEditor($('careGuideEditor').hidden,true));
+    $('guideCancelBtn').addEventListener('click',()=>showGuideEditor(false));
+    $('refreshGuideBtn').addEventListener('click',loadGuide);
     $('careGuideForm').addEventListener('submit',submitGuide);
     $('careDiscussionForm').addEventListener('submit',submitMessage);
     $('discussionCancelReply').addEventListener('click',cancelReply);
     $('refreshDiscussionBtn').addEventListener('click',()=>loadMessages(true));
     $('careGuideResults').addEventListener('click',e=>{
-      if(e.target.closest('#refreshGuideBtn'))return loadGuide();
       const b=e.target.closest('[data-guide-review]');if(!b)return;
       reviewGuide(Number(b.dataset.guideReview),b.dataset.guideStatus,b);
     });
@@ -194,15 +229,16 @@
     });
     document.querySelectorAll('[data-care-tab]').forEach(b=>b.addEventListener('click',()=>changeTab(b.dataset.careTab)));
   }
-  async function mount({db,caseId,profile}){
+  async function mount({db,caseId,profile,focus=[],note=''}){
     if(!db||!caseId||!$('careGuideResults')||!$('careDiscussionList'))return;
     const preferredPanel=state.caseId===caseId?state.panel:'guide';
     destroy();
     const mountToken=state.loadId;
     state.db=db;state.caseId=caseId;state.profile=profile;state.panel=preferredPanel;
+    state.focus=Array.isArray(focus)?focus:[];state.note=String(note||'');
     $('careGuideResults').innerHTML='<p class="care-empty">正在載入照顧重點…</p>';
     $('careDiscussionList').innerHTML='<p class="care-empty">正在載入交班討論…</p>';
-    cancelReply();bind();changeTab(preferredPanel);
+    cancelReply();showGuideEditor(false);bind();changeTab(preferredPanel);
     await Promise.all([loadGuide(),loadMessages(false)]);
     if(state.caseId!==caseId||state.loadId!==mountToken)return;
     state.loaded=true;
@@ -212,5 +248,5 @@
       }
     },25000);
   }
-  window.CareCollab={mount,destroy,selectTab:changeTab};
+  window.CareCollab={mount,destroy,selectTab:next=>{changeTab(next);if(next==='guide')showGuideEditor(true)}};
 })();
