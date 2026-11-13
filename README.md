@@ -2,31 +2,32 @@
 
 獨立研究專案：`BiuBiuSmile/home-care-handover`。網站使用 GitHub Pages，登入與交班資料以 Supabase Auth + PostgreSQL / RLS 管理，不使用 Railway。
 
-## 最新版：管理員建立員工帳號
+## 最新版：管理員自訂員工密碼
 
 - **員工帳號**：台灣手機門號（09xxxxxxxx）。
-- **密碼**：管理員從後台建立帳號後，取得**系統產生的一次性初始密碼**。員工首次登入必須自行更改；個案權限在密碼更改前一律封鎖。
-- **安全原則**：不蒐集身分證字號作為密碼（身分證號易遭取得，不能當固定登入密碼）。
-- **無自助註冊**：員工帳號只能由登入的管理員建立，管理員建檔透過 Supabase Edge Function 執行，不在 GitHub Pages 放管理密鑰。
-- 管理員可維護個案、指派服務人員及調整人員權限；居服員／居督只能看已指派個案。
-- `demo.html` 是使用虛構個案、瀏覽器本機儲存的展示版，與正式資料分開。
+- **密碼**：由管理員在建立帳號時自行輸入，至少 10 字元、包含英文與數字；**新員工不需首次強制改密碼**。
+- 管理員可從員工清單**重設居服員或居督密碼**；舊密碼不顯示、不允許查詢，重設只在伺服器端 Auth 執行。
+- 為保障個資，不接受身分證字號當登入密碼，亦不接受含員工手機號碼的密碼。
+- **無自助註冊**：員工只能由管理員建立；建檔與密碼重設由受權限保護的 Supabase Edge Function 執行，沒有任何管理金鑰放在 GitHub Pages。
+- 管理員可管理個案、指派服務人員及調整人員權限；居服員／居督只能查看獲指派個案。
+- `demo.html` 使用虛構個案、瀏覽器本機儲存，不會寫入 Supabase。
 
 ## 主要檔案
 
 | 檔案 | 用途 |
 |---|---|
-| `index.html` | 手機＋密碼登入、首次密碼更新、交班及管理員後台 |
-| `portal.js` | 登入、管理員建檔、權限與交班流程 |
-| `config.js` | Supabase 專案 URL 和公開 Publishable Key（非私密金鑰） |
-| `supabase/schema.sql` | Supabase 資料表與權限設計 |
-| `supabase/functions/admin-create-staff/index.ts` | 管理員專用建立員工帳號的伺服器功能 |
-| `bootstrap-admin.html` | **僅初次設定用**的臨時管理員入口，初始化後應刪除 |
-| `docs/LOGIN_ADMIN_SETUP.md` | [完整登入與第一位管理員設定指南](docs/LOGIN_ADMIN_SETUP.md) |
+| `index.html` | 員工登入、管理員建檔／重設密碼、交班工作台 |
+| `portal.js` | 登入、員工密碼維護、個案權限與交班流程 |
+| `config.js` | Supabase 專案 URL 和公開 Publishable Key |
+| `supabase/schema.sql` | 資料表和 RLS 權限設計 |
+| `supabase/functions/admin-create-staff/index.ts` | 管理員建立帳號或重設員工密碼的受保護伺服器功能 |
+| `bootstrap-admin.html` | **僅首次設定用**的管理員入口，正式上線前應停用並移除 |
+| `docs/LOGIN_ADMIN_SETUP.md` | [完整帳號管理與安全注意事項](docs/LOGIN_ADMIN_SETUP.md) |
 
 ## 使用網址
 
-[安護交班正式入口](https://biubiusmile.github.io/home-care-handover/)
+[安護交班](https://biubiusmile.github.io/home-care-handover/)
 
 ## 安全與限制
 
-此階段沒有真實使用者的端對端登入測試，仍需先建立第一位管理員，並確認 Supabase Phone Provider 可用。**在完成安全稽核與法規評估前，不要輸入真實個案／健康資料。** 尚需補強 MFA、操作稽核、帳號復原、備份、換號及離職撤權等功能。
+管理員知道員工密碼可能產生身分冒用風險，應遵守內部密碼發放、存取及稽核規範。此版已部署但未經完整員工帳號端對端測試。**在完成完整資安與法規評估前，不要輸入真實個案或健康資訊。** 正式上線仍須補強 MFA、操作稽核、密碼重設通知、登入 session 風險處理、備份、換號及離職撤權流程。
