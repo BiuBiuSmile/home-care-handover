@@ -197,12 +197,14 @@
     if(!db||!caseId||!$('careGuideResults')||!$('careDiscussionList'))return;
     const preferredPanel=state.caseId===caseId?state.panel:'guide';
     destroy();
+    const mountToken=state.loadId;
     state.db=db;state.caseId=caseId;state.profile=profile;state.panel=preferredPanel;
     $('careGuideResults').innerHTML='<p class="care-empty">正在載入照顧重點…</p>';
     $('careDiscussionList').innerHTML='<p class="care-empty">正在載入交班討論…</p>';
     cancelReply();bind();changeTab(preferredPanel);
     await Promise.all([loadGuide(),loadMessages(false)]);
-    if(state.caseId===caseId)state.loaded=true;
+    if(state.caseId!==caseId||state.loadId!==mountToken)return;
+    state.loaded=true;
     state.timer=setInterval(()=>{
       if(document.visibilityState==='visible' && state.panel==='discussion' && state.caseId===caseId && !$('caseFocus')?.hidden){
         loadMessages(false);
