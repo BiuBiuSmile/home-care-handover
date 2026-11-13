@@ -1,46 +1,63 @@
-# 安護交班｜手機簡訊登入與管理員啟用指南
+# 安護交班｜手機帳號、管理員建檔與首次密碼設定
 
-本專案為 GitHub Pages + Supabase Auth + PostgreSQL。**使用者只需輸入手機號碼，收到簡訊後填寫 OTP 驗證碼，不需任何密碼或 Email。**
+本專案是獨立的 GitHub Pages + Supabase Auth + PostgreSQL 交班系統。
 
-## 使用者登入方式
-1. 前往 `https://biubiusmile.github.io/home-care-handover/`
-2. 輸入台灣手機門號，例如 `0912345678`，系統轉為 `+886912345678`
-3. 點「傳送簡訊驗證碼」，收到 SMS 後輸入驗證碼
-4. 已核准的帳號登入工作台；第一次使用自動建立待審核帳號，須由管理員先啟用並指派個案
-5. 每次重新登入用 SMS OTP；若登入工作階段仍有效，可能不必重新驗證。可透過「登出」清除該瀏覽器登入狀態。
+## 登入方式
 
-### 必要的 Supabase 設定
-1. 開啟 [Supabase Phone Provider](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/auth/providers)。
-2. 在 **Authentication → Sign In / Providers → Phone** 啟用 Phone。
-3. 設定簡訊供應商及發送憑證（如 Twilio、Vonage、MessageBird，依 Dashboard 可用項目），確認能送達台灣門號。供應商可能依簡訊計價。
-4. 配置合適的 OTP 速率限制與 CAPTCHA，避免大量發送簡訊及費用濫用。
-5. 研究期間可依 [官方測試門號指南](https://supabase.com/docs/guides/auth/testing-auth-flows) 設定虛構門號＋固定 OTP；託管 Supabase 仍要求配置 SMS 供應商。**正式使用前務必移除測試門號與固定驗證碼。**
+- **登入帳號：員工手機門號**（輸入 `09xxxxxxxx`，網站自動轉換為 `+8869xxxxxxxx`）。
+- **登入密碼：由管理員建檔時取得的一次性隨機初始密碼**，員工首次登入必須更改成自己的密碼。
+- **沒有員工自行註冊入口**，也不需要在每次登入時輸入簡訊驗證碼。
+- 出於長照個案安全及個資保護，**不使用身分證字號作固定密碼或初始密碼**。系統不蒐集身分證號。
+- 前端不儲存初始密碼；管理員建檔成功後只顯示一次，必須以安全方式交給員工，禁止群組公開傳送。
 
-**重要：手機號碼不能單獨證明身分。** SMS 驗證是必要步驟；未通過驗證的帳號不能取得個案資料權限。
+## 資料庫與權限
 
-## 建立第一位管理員
-1. 使用自己的手機號碼在網站接收並完成 SMS 驗證。
-2. 新帳號起初 `active=false`、角色 `staff`，不可查看任何個案。
-3. 在 [SQL Editor](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/sql/new) 執行下列 SQL，將範例門號換成**自己剛驗證的**手機號碼國際格式。不要提供密碼或驗證碼給他人。
+- `profiles.must_change_password` 預設 true。只有 Supabase Auth 成功更改帳號密碼後，資料庫觸發器才會解除此限制。
+- `is_active()`、`is_admin()` 都要求帳號啟用、已確認，以及密碼設定完成。未更改初始密碼者無法看任何個案。
+- 居服員及居督只可閱覽已指派個案；最高管理員可核准、停用、調整角色及指派。
+- `admin-create-staff` Edge Function 必須帶有效管理員登入 JWT，伺服器再次驗證角色及狀態；`SUPABASE_SERVICE_ROLE_KEY` 僅位於 Supabase Function 環境，絕不出現在 GitHub Pages。
+- Edge Function 僅建立居服員／居督帳號，提升管理員角色必須由既有管理員在後台操作。
+
+## 由管理員新增居服員
+
+1. 管理員登入 `https://biubiusmile.github.io/home-care-handover/`。
+2. 進入「管理員後台」→「建立員工帳號」。
+3. 輸入員工姓名、台灣手機門號，選擇居服員或居督。
+4. 點「建立員工帳號」，網站呼叫 Supabase Edge Function，伺服器產生隨機初始密碼並建立 Auth 使用者（`phone_confirm=true`）。
+5. 初始密碼只顯示一次。確認本人身分後，**私下**將帳號與初始密碼交付員工。
+6. 員工使用手機號碼與初始密碼登入，完成「首次設定個人密碼」，系統才會開放已指派個案。
+
+> 管理員建立帳號時的 `phone_confirm=true` 代表管理員確認員工手機號碼，不等於簡訊實際驗證手機持有者。要處理真實長照資料，需補充正式身分驗證與 MFA 政策。
+
+## 系統建立第一位管理員（只操作一次）
+
+因資料庫目前沒有既有管理員，不能讓匿名網站自行註冊為管理員。
+
+1. 開啟 [Supabase Authentication → Users](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/auth/users)。
+2. 使用 Dashboard 的「Add user / Create new user」建立**臨時初始化帳號**（Email + 由你自行管理的臨時密碼），確認該 Email 可登入。這是系統初始化用途，不是居服員登入方式。
+3. 回到 [SQL Editor](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/sql/new)，將下列範例 Email 改成你的臨時帳號再執行：
 
 ```sql
 update public.profiles
-set role = 'admin', active = true,
-    display_name = '最高權限管理員'
-where id = (
-  select id from auth.users
-  where phone = '+886912345678'
-    and phone_confirmed_at is not null
-)
-returning id, display_name, role, active;
+set display_name='系統初始管理員', role='admin', active=true
+where id=(select id from auth.users
+          where email='your-admin@example.com'
+            and email_confirmed_at is not null)
+returning id, role, active, must_change_password;
 ```
 
-回傳 **1 列**才表示有成功啟用該管理員帳號；0 列代表手機號碼或驗證狀態不符合。完成後重新登入就能看到管理員後台。
+4. **必須有 1 列回傳**；若沒有，先確認 Dashboard 的臨時帳號是否已建立及驗證。
+5. 開啟一次性初始化入口：`https://biubiusmile.github.io/home-care-handover/bootstrap-admin.html`，用該臨時 Email＋密碼登入。
+6. 網頁會返回正式首頁並要求你變更初始密碼；完成後就能進入「管理員後台」。
+7. 在管理員後台建立自己的**手機帳號**，登入後更改初始密碼，然後由第一位管理員在後台把手機帳號角色改為「管理員」。
+8. 確認新手機管理員可登入後，停用臨時 Email 管理員，並從 GitHub 刪除 `bootstrap-admin.html`。留至少一位啟用中的管理員，不要刪除唯一管理員。
 
-管理員可在後台替其他已驗證門號的使用者填寫姓名、核准帳號、設定角色及指派個案。
+## Supabase Phone Provider
 
-## 安全注意
-- 簡訊 OTP 不等於多因素驗證（MFA）；手機號碼可能換人或遭 SIM 交換攻擊。正式上線需評估管理員額外 MFA、登入時效、裝置安全及異常監控。
-- 需要簡訊供應商才能實際發送驗證碼。未配置前，網站雖可開啟，不能完成手機登入。
-- 簡訊供應商金鑰、Supabase Secret/Service Role、資料庫密碼不得放在 GitHub 或前端。
-- 正式處理長照個案健康資訊前，需完成個資適法性、權限稽核、離職撤權、資料備份、資安測試。
+到 [Authentication → Sign In / Providers](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/auth/providers) 啟用 Phone 登入方式。**手機＋密碼**與「每次輸入簡訊 OTP」是不同流程；後台建立並由管理員確認的門號，登入時不會主動要求傳簡訊。如 Supabase 畫面要求 SMS Provider，再依介面提示處理；未實測前不要直接用真實個案資料。
+
+## 上線前必須完成
+
+長照交班可能涉及健康與其他敏感個資。網站目前屬研究測試版本，尚未完成資安審查、MFA、完整管理員稽核、登入風險防護、備份策略、帳號救援、換號與離職撤權流程。**只能先用虛構測試個案資料。**
+
+不要將真實身分證字號、私人密碼、Service Role 金鑰、OTP 或資料庫密碼放在 GitHub 或傳給其他人。
