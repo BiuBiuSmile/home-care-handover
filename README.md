@@ -2,6 +2,18 @@
 
 獨立研究專案：`BiuBiuSmile/home-care-handover`。網站使用 GitHub Pages，登入與交班資料以 Supabase Auth + PostgreSQL / RLS 管理，不使用 Railway。
 
+## 新功能：個案照顧檔案與交班討論
+
+已在既有個案頁新增三個標籤：
+
+1. **照顧檔案**：已指派人員可提出照顧重點，須經居督／管理員審核後才列入已確認重點。原有管理員維護的固定重點繼續保留。
+2. **交班討論**：同個案的已授權服務人員可以發問、回覆、補充；訊息保留作者及時間，可將討論先帶入照顧重點草稿等待審核。
+3. **正式交班**：沿用原本的歷史交班、風險提醒、已讀確認與新增交班功能。
+
+資料庫新增 `public.case_care_guide_items`、`public.case_discussion_messages`，均有 RLS；討論內容與提案不能由使用者任意覆寫或刪除。請參閱 [照顧檔案與討論使用說明](docs/CARE_COLLAB_GUIDE.md)。
+
+**研究版提醒**：討論區約每 25 秒檢查新訊息（開啟討論分頁且瀏覽器可見時），不是緊急通知服務；完成正式資安與法規驗證前仍應只用虛構測試個案。
+
 ## 最新版：管理員自訂員工密碼
 
 - **員工帳號**：台灣手機門號（09xxxxxxxx）。
@@ -18,7 +30,8 @@
 | 檔案 | 用途 |
 |---|---|
 | `index.html` | 員工登入、管理員建檔／重設密碼、交班工作台 |
-| `portal.js` | 登入、員工密碼維護、個案權限與交班流程 |
+| `portal.js` | 登入、員工密碼維護、個案權限與正式交班流程 |
+| `case-collab.js`／`case-collab.css` | 照顧檔案審核、個案交班討論與手機介面 |
 | `config.js` | Supabase 專案 URL 和公開 Publishable Key |
 | `supabase/schema.sql` | 資料表和 RLS 權限設計 |
 | `supabase/functions/admin-create-staff/index.ts` | 管理員建立帳號或重設員工密碼的受保護伺服器功能 |
