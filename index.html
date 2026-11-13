@@ -171,13 +171,13 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
    <div class="stack">
     <section class="panel">
      <h2>建立員工帳號</h2>
-     <p class="help">由管理員填寫員工姓名、手機帳號與登入密碼。建立後居服員可以直接使用這組密碼登入，不再強制改密碼。請私下安全告知本人，不使用身分證字號或手機號碼當密碼。</p>
+     <p class="help">由管理員填寫員工姓名、手機帳號與登入密碼。建立後居服員可以直接使用這組密碼登入，不再強制改密碼。請私下安全告知本人，可使用身分證字號格式的英數字串，但為保護個案資料，不建議直接使用實際身分證字號當密碼；密碼亦不可包含手機號碼。</p>
      <form id="provisionForm" autocomplete="off">
       <div class="split">
        <div class="field"><label for="staffName">員工姓名</label><input id="staffName" maxlength="80" required autocomplete="off"></div>
        <div class="field"><label for="staffPhone">手機門號（登入帳號）</label><input id="staffPhone" type="tel" inputmode="tel" maxlength="20" placeholder="09xxxxxxxx" required autocomplete="off"></div>
        <div class="field"><label for="staffRole">員工角色</label><select id="staffRole"><option value="staff">居服員</option><option value="supervisor">居督</option></select></div>
-       <div class="field"><label for="staffPassword">管理員設定密碼（至少 10 字元，含英文與數字）</label><input id="staffPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></div>
+       <div class="field"><label for="staffPassword">管理員設定密碼（至少 10 字元，含英文與數字，可使用身分證格式）</label><input id="staffPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></div>
        <div class="field"><label for="staffPasswordConfirm">再次確認密碼</label><input id="staffPasswordConfirm" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></div>
       </div>
       <label class="help"><input id="showStaffPassword" type="checkbox" style="width:18px;min-height:18px;vertical-align:middle"> 暫時顯示輸入的密碼</label>
