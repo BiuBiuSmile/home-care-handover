@@ -95,6 +95,98 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 @media(max-width:780px){.overview-heading h1{font-size:23px}.overview-heading .btn{width:auto}.case-stats{gap:8px}.stat-card{padding:12px;gap:6px;flex-direction:column;align-items:flex-start}.stat-card .stat-icon{width:34px;height:34px;font-size:17px}.stat-card small{font-size:11px}.stat-card strong{font-size:23px}.browser-panel{padding:16px}.case-filters{grid-template-columns:1fr 1fr}.search-group{grid-column:1/-1}.case-card-grid{grid-template-columns:1fr}.row-mode .case-tile{display:flex;gap:10px}.row-mode .tile-top{justify-content:space-between;width:100%}.row-mode .tile-subtitle{display:-webkit-box;-webkit-line-clamp:2}.row-mode .tile-bottom{border-top:1px solid #edf2f5;padding-top:10px;width:100%}.case-detail-panel{padding:17px}.case-detail-panel .toolbar:first-child{align-items:stretch}.case-detail-panel .toolbar:first-child .btn{width:100%}.browser-hint{display:none}}
 @media(max-width:420px){.case-stats{grid-template-columns:1fr 1fr}.stat-card:last-child{grid-column:1/-1;flex-direction:row;align-items:center}.stat-card:last-child .stat-icon{width:42px;height:42px}.case-filters{grid-template-columns:1fr}.search-group{grid-column:auto}.view-btn{padding:8px 11px}}
 
+
+/* Admin workspace redesign — isolated styles; case workspace remains unchanged. */
+.admin-shell{max-width:1280px;margin:0 auto}
+.admin-hero{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:28px 32px;background:linear-gradient(115deg,#123447,#134b54 70%,#0f716d);color:#fff;border-radius:20px;position:relative;overflow:hidden}
+.admin-hero:after{content:"";position:absolute;right:64px;top:-100px;width:340px;height:340px;border:1px solid rgba(255,255,255,.13);border-radius:50%;pointer-events:none}
+.admin-overline{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12px;color:#b6e6df;letter-spacing:.05em}
+.admin-overline-dot{width:7px;height:7px;background:#5bd2b3;border-radius:50%}
+.admin-hero h1{margin:9px 0 8px;font-size:26px;color:#fff;letter-spacing:-.035em}
+.admin-hero p{margin:0;color:#c7dedf;font-size:14px;line-height:1.75}
+.admin-hero-icon{width:62px;height:62px;display:grid;place-items:center;color:#c9f2e6;background:#ffffff19;border:1px solid #ffffff3a;border-radius:18px;flex-shrink:0;position:relative;z-index:1}
+.admin-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 12px}
+.admin-summary-item{border:1px solid #e2eaf0;background:#fff;display:flex;align-items:center;gap:14px;padding:18px 20px;border-radius:15px}
+.admin-summary-item>div{display:flex;flex-direction:column;gap:3px}.admin-summary-item span:not(.admin-summary-icon){font-size:12px;color:#6b8290}.admin-summary-item strong{font-size:25px;color:#183d4d;font-variant-numeric:tabular-nums}
+.admin-summary-icon{display:grid;place-items:center;background:#e9f5f2;width:44px;height:44px;flex-shrink:0;border-radius:13px;color:#097f77;font-size:20px;font-weight:750}
+.admin-shortcuts{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:20px}
+.admin-shortcuts a{display:flex;align-items:center;justify-content:space-between;gap:18px;text-decoration:none;color:#466476;border:1px solid #dce6ec;background:#fff;border-radius:10px;padding:10px 15px;font-size:13px;font-weight:700;transition:border-color .15s,color .15s,background .15s}
+.admin-shortcuts a:hover{border-color:#79c2b6;color:#006c65;background:#f0faf7}
+.admin-shortcuts a span{color:#9bb4bd}.admin-stack{display:flex;flex-direction:column;gap:20px}
+.admin-panel{padding:0;overflow:clip;scroll-margin-top:20px;border-radius:18px}
+.admin-section-header{display:flex;align-items:center;gap:15px;padding:24px 26px 21px;border-bottom:1px solid #e8eef2}
+.admin-section-icon{width:48px;height:48px;display:grid;place-items:center;background:#eaf5f3;color:#087c74;border-radius:14px;flex-shrink:0}
+.admin-section-text{flex:1;min-width:0}.admin-section-kicker{display:block;color:#0b857d;font-weight:800;letter-spacing:.07em;font-size:11px;margin-bottom:5px}
+.admin-section-text h2{font-size:20px;margin:0 0 4px;letter-spacing:-.02em;color:#15374a}.admin-section-text p{font-size:13px;line-height:1.6;color:#6c8190;margin:0}
+.admin-head-action{margin-left:auto;white-space:nowrap}
+.admin-user-toolbar{padding:19px 26px;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.admin-search{display:flex;align-items:center;gap:8px;border:1px solid #d2dfe7;border-radius:10px;padding:0 12px;min-width:230px;flex:1;background:#fafcfd;color:#8196a2}
+.admin-search:focus-within{outline:2px solid #8ecfc4;outline-offset:1px}
+.admin-search input{border:0;outline:0;background:transparent;box-shadow:none;min-height:44px;padding-left:0;font-size:14px}
+.admin-search input:focus-visible{outline:0}
+.admin-compact-filter{min-width:155px;display:flex;flex-direction:column;gap:5px;font-size:12px;color:#607989;font-weight:700}
+.admin-compact-filter select{font-size:14px;min-height:44px}
+.admin-count{font-size:12px;color:#608090;font-weight:700;margin-left:auto;padding:8px 0}
+.staff-table-shell{padding:0 26px 17px;max-width:100%;overflow-x:auto}
+.staff-table{table-layout:fixed;width:100%;border-collapse:separate;border-spacing:0 9px}
+.staff-table thead th{padding:0 14px 4px;border:0;color:#728694;font-size:12px;letter-spacing:.02em;font-weight:750}
+.staff-table th:nth-child(1){width:37%}.staff-table th:nth-child(2){width:17%}.staff-table th:nth-child(3){width:15%}.staff-table th:nth-child(4){width:31%}
+.staff-table td{background:#f8fafb;border-top:1px solid #e5edf2;border-bottom:1px solid #e5edf2;padding:12px 13px}
+.staff-table td:first-child{border-left:1px solid #e5edf2;border-radius:12px 0 0 12px}
+.staff-table td:last-child{border-right:1px solid #e5edf2;border-radius:0 12px 12px 0}
+.staff-table .staff-person{display:flex;gap:11px;align-items:center;min-width:0}
+.staff-avatar{width:39px;height:39px;border-radius:11px;background:#dfeeea;color:#237b72;display:grid;place-items:center;font-weight:800;flex:0 0 auto}
+.staff-person-copy{min-width:0;flex:1}
+.staff-person-copy input{font-weight:700;color:#234255;background:#fff;min-width:0;height:41px;min-height:41px;padding:9px 10px}
+.staff-subline{display:flex;align-items:center;gap:6px;margin-top:5px;font-size:11px;color:#8699a4}
+.staff-table select{font-size:13px;min-width:0;height:42px;min-height:42px;background:#fff}
+.staff-role-col{min-width:0}
+.staff-state{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:750;color:#256d5b;white-space:nowrap}
+.staff-state input{width:19px;height:19px;min-height:19px;flex-shrink:0;accent-color:#0a8a7e;cursor:pointer}
+.staff-state input:disabled{cursor:not-allowed}
+.staff-state:has(input:not(:checked)){color:#ac6042}
+.staff-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.staff-actions .btn{font-size:12px;min-height:38px;padding:8px 10px;border-radius:9px;white-space:nowrap}
+.staff-actions .btn.warn{background:#fff5f4;color:#a73c38}
+.staff-actions .btn.warn:hover{background:#fde8e7}
+.staff-table .staff-self{background:#e6f4ef;color:#167461;margin-left:0}
+.staff-table .staff-empty{padding:25px 15px;text-align:center;color:#8095a0}
+.admin-footnote{margin:0;padding:13px 26px 20px;color:#738794;font-size:12px;line-height:1.8}
+.admin-form{padding:22px 26px 26px}
+.admin-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:19px;row-gap:5px}
+.admin-form-grid.cols-three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.admin-form .field{margin:5px 0 12px}
+.admin-form .field label{font-size:13px;color:#385568;line-height:1.6}
+.admin-form .field input,.admin-form .field select,.admin-form .field textarea{background:#fafcfd;border-color:#d8e3e9;transition:border-color .15s,background .15s}
+.admin-form .field input:focus,.admin-form .field select:focus,.admin-form .field textarea:focus{background:#fff;border-color:#7fc3b9}
+.admin-form textarea{min-height:125px}
+.admin-form .field input[readonly]{background:#edf2f5;color:#657887;cursor:not-allowed}
+.admin-field-hint{font-size:11px;color:#8b9ba7;line-height:1.6}
+.required-dot{color:#b75f4c;font-weight:800}
+.admin-form-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:17px;padding-top:18px;border-top:1px solid #e7edf1}
+.admin-form-actions .btn{padding-inline:19px}
+.admin-action-help{font-size:12px;color:#708b99;margin-right:auto}
+.admin-checkbox-line{display:flex;align-items:center;gap:8px;color:#506d7b;font-size:13px;cursor:pointer}
+.admin-checkbox-line input{width:18px;height:18px;min-height:18px;accent-color:#0a867e}
+.admin-form .admin-footnote{padding:8px 0 0;font-size:12px}
+.admin-form-section{border:1px solid #edf1f4;background:#fff;border-radius:14px;padding:20px 21px;margin-bottom:14px}
+.admin-form-section:nth-child(2){background:#fbfdfd}
+.admin-form-section-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.admin-step-number{display:grid;place-items:center;border-radius:10px;background:#e7f5f1;color:#078078;width:34px;height:34px;flex-shrink:0;font-weight:800;font-size:12px}
+.admin-form-section-head h3{font-size:16px;color:#294c5f;margin:0 0 4px}
+.admin-form-section-head p{font-size:12px;color:#7d919c;margin:0}
+.admin-mode-tag{border:1px solid #bcdad5;color:#0a8177;background:#eaf7f3;padding:6px 12px;border-radius:99px;font-weight:750;font-size:12px;white-space:nowrap}
+.admin-mode-tag.editing{background:#fff4e7;border-color:#f4d9ae;color:#a46b20}
+.sticky-actions{position:sticky;bottom:0;background:#fff;z-index:2;padding:15px 0 0;margin-top:0;box-shadow:0 -10px 22px -19px #526e83}
+.admin-assigned-list{padding:0 26px 22px}
+.admin-assigned-list h3{font-size:16px;color:#254d5a}
+.admin-assigned-list table{width:100%}
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1110px){.staff-table th:nth-child(1){width:32%}.staff-table th:nth-child(2){width:19%}.staff-table th:nth-child(3){width:14%}.staff-table th:nth-child(4){width:35%}.staff-actions .btn{padding-inline:8px}}
+@media(max-width:930px){.staff-table{table-layout:auto}.staff-table thead{display:none}.staff-table,.staff-table tbody{display:block}.staff-table tr{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(130px,.8fr) minmax(100px,.65fr);gap:10px;background:#f8fafb;border:1px solid #e4ecf0;border-radius:13px;padding:14px;margin-bottom:9px}.staff-table td,.staff-table td:first-child,.staff-table td:last-child{display:block;background:transparent;border:0;padding:0;border-radius:0}.staff-table td:nth-child(4){grid-column:1/-1}.staff-table td:before{content:attr(data-label);display:block;color:#8596a1;font-size:11px;margin-bottom:5px}.staff-actions{justify-content:flex-start}.staff-table-shell{overflow:visible}.admin-form-grid.cols-three{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.admin-hero{padding:20px;border-radius:15px}.admin-hero h1{font-size:22px}.admin-hero-icon{display:none}.admin-summary{gap:8px}.admin-summary-item{padding:12px;gap:7px;flex-direction:column;align-items:flex-start}.admin-summary-icon{width:34px;height:34px;border-radius:10px;font-size:15px}.admin-summary-item strong{font-size:22px}.admin-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.admin-shortcuts a{padding:11px}.admin-section-header{padding:19px 16px;gap:10px;align-items:flex-start;flex-wrap:wrap}.admin-section-icon{width:39px;height:39px;border-radius:10px}.admin-section-text h2{font-size:18px}.admin-head-action{margin-left:auto;font-size:12px;padding:8px 10px;min-height:38px}.admin-user-toolbar{padding:17px 16px;align-items:stretch}.admin-search{width:100%;flex-basis:100%}.admin-compact-filter{flex:1}.admin-count{align-self:end;padding:5px 0}.staff-table-shell{padding:0 16px 12px}.staff-table tr{grid-template-columns:1fr 1fr;gap:12px}.staff-table td:first-child{grid-column:1/-1}.staff-table td:nth-child(4){grid-column:1/-1}.staff-actions .btn{flex:1}.admin-form{padding:17px 16px 20px}.admin-form-grid,.admin-form-grid.cols-three{grid-template-columns:1fr}.admin-form-section{padding:15px;margin-bottom:10px}.admin-form-actions{flex-direction:column;align-items:stretch}.admin-form-actions .action-inline{width:100%}.admin-form-actions .action-inline .btn{flex:1}.admin-form-actions .btn{width:100%}.admin-action-help{display:none}.admin-footnote{padding:13px 16px}.admin-mode-tag{margin-left:48px}.admin-assigned-list{padding:0 16px 18px}}
+@media(prefers-reduced-motion:reduce){.admin-shortcuts a,.admin-form .field input,.admin-form .field textarea{transition:none}}
+
 </style>
 </head>
 <body>
@@ -168,32 +260,123 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
    </div>
   </section>
   <section id="adminPage" hidden>
-   <div class="stack">
-    <section class="panel">
-     <h2>建立員工帳號</h2>
-     <p class="help">由管理員填寫員工姓名、手機帳號與登入密碼。建立後居服員可以直接使用這組密碼登入，不再強制改密碼。請私下安全告知本人，可使用身分證字號格式的英數字串，但為保護個案資料，不建議直接使用實際身分證字號當密碼；密碼亦不可包含手機號碼。</p>
-     <form id="provisionForm" autocomplete="off">
-      <div class="split">
-       <div class="field"><label for="staffName">員工姓名</label><input id="staffName" maxlength="80" required autocomplete="off"></div>
-       <div class="field"><label for="staffPhone">手機門號（登入帳號）</label><input id="staffPhone" type="tel" inputmode="tel" maxlength="20" placeholder="09xxxxxxxx" required autocomplete="off"></div>
-       <div class="field"><label for="staffRole">員工角色</label><select id="staffRole"><option value="staff">居服員</option><option value="supervisor">居督</option></select></div>
-       <div class="field"><label for="staffPassword">管理員設定密碼（至少 10 字元，含英文與數字，可使用身分證格式）</label><input id="staffPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></div>
-       <div class="field"><label for="staffPasswordConfirm">再次確認密碼</label><input id="staffPasswordConfirm" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></div>
+   <div class="admin-shell">
+    <header class="admin-hero">
+     <div class="admin-hero-copy">
+      <span class="admin-overline"><span class="admin-overline-dot"></span> 管理員工作台</span>
+      <h1>人員與個案管理</h1>
+      <p>集中管理使用者權限、員工帳號、個案資料與交班查閱資格。</p>
+     </div>
+     <span class="admin-hero-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>
+    </header>
+    <div class="admin-summary" aria-label="管理概況">
+     <div class="admin-summary-item"><span class="admin-summary-icon">👥</span><div><span>帳號總數</span><strong id="adminTotalUsers">—</strong></div></div>
+     <div class="admin-summary-item"><span class="admin-summary-icon">✓</span><div><span>已啟用帳號</span><strong id="adminActiveUsers">—</strong></div></div>
+     <div class="admin-summary-item"><span class="admin-summary-icon">▦</span><div><span>服務個案</span><strong id="adminTotalCases">—</strong></div></div>
+    </div>
+    <nav class="admin-shortcuts" aria-label="快速前往管理區塊">
+     <a href="#adminUsersSection">帳號權限 <span>↗</span></a>
+     <a href="#adminCreateSection">建立員工 <span>↗</span></a>
+     <a href="#adminCasesSection">個案編輯 <span>↗</span></a>
+     <a href="#adminAssignmentsSection">人員指派 <span>↗</span></a>
+    </nav>
+    <div class="admin-stack">
+     <section class="panel admin-panel" id="adminUsersSection">
+      <div class="admin-section-header">
+       <div class="admin-section-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 10h5M19.5 7.5v5"/></svg></div>
+       <div class="admin-section-text"><span class="admin-section-kicker">01 / 員工權限</span><h2>帳號與權限管理</h2><p>查看使用者、設定角色與啟用狀態。重設密碼或刪除帳號需管理員授權。</p></div>
+       <button class="btn alt admin-head-action" type="button" id="reloadAdmin"><span aria-hidden="true">↻</span> 重新整理</button>
       </div>
-      <label class="help"><input id="showStaffPassword" type="checkbox" style="width:18px;min-height:18px;vertical-align:middle"> 暫時顯示輸入的密碼</label>
-      <p class="help">密碼僅透過加密連線交給 Supabase Auth 驗證與儲存雜湊值，不會顯示於員工清單，也不會提供「查看舊密碼」功能。</p>
-      <button type="submit" id="createStaffBtn" class="btn">建立員工帳號</button>
-     </form>
-     <div id="createdStaffSuccess" class="msg" hidden role="status">帳號建立成功。員工可以直接使用手機門號與管理員設定的密碼登入。</div>
-    </section>
-    <section class="panel"><div class="toolbar"><h2>帳號與權限管理</h2><button class="btn alt" type="button" id="reloadAdmin">重新整理</button></div><p class="help">管理員可以新增帳號、修改角色、停用及刪除居服員或居督帳號。刪除後無法復原，已建立的交班紀錄仍會保留。</p><div class="scroll-table"><table><thead><tr><th>使用者</th><th>角色</th><th>啟用</th><th>操作</th></tr></thead><tbody id="usersBody"></tbody></table></div></section>
-    <section class="panel"><h2>新增／編輯個案</h2><p class="help">為保護個資，請先使用虛構測試個案；正式上線須完成資安與適法性確認。</p><form id="caseForm"><div class="split"><div class="field"><label for="manageCaseId">個案代碼（新增後不可改）</label><input id="manageCaseId" required maxlength="40" placeholder="例如 HC-100"></div><div class="field"><label for="manageCaseName">個案顯示名稱</label><input id="manageCaseName" required maxlength="100"></div><div class="field"><label for="manageArea">服務區域</label><input id="manageArea" maxlength="100"></div><div class="field"><label for="manageService">服務項目</label><input id="manageService" maxlength="150"></div>
-<div class="field"><label for="manageStatus">個案服務狀態</label><select id="manageStatus"><option value="服務中">服務中</option><option value="暫停">暫停</option><option value="結案">結案</option><option value="其他">其他</option></select></div>
-<div class="field"><label for="manageSupervisorName">主責督導（顯示資訊）</label><input id="manageSupervisorName" maxlength="80" autocomplete="off"></div>
-<div class="field"><label for="manageCaregiverName">主責居服員（顯示資訊）</label><input id="manageCaregiverName" maxlength="80" autocomplete="off"></div></div><div class="field"><label for="manageFocus">固定照顧重點（每行：標題 | 內容）</label><textarea id="manageFocus" maxlength="3000" placeholder="移位安全 | 先確認煞車固定&#10;備餐習慣 | 需先確認飲食禁忌"></textarea></div><div class="field"><label for="manageNote">重要提醒</label><textarea id="manageNote" maxlength="1000"></textarea></div><div class="action-inline"><button class="btn" type="submit" id="saveCaseBtn">新增個案</button><button class="btn alt" type="button" id="clearCaseBtn">清除欄位</button></div></form></section>
-    <section class="panel"><h2>個案服務人員指派</h2><p class="help">居服員與督導必須被指派到個案，才能看到交班紀錄。取消指派後，資料庫會立即拒絕讀取。</p><form id="assignForm"><div class="split"><div class="field"><label for="assignCase">選擇個案</label><select id="assignCase" required></select></div><div class="field"><label for="assignUser">選擇已啟用人員</label><select id="assignUser" required></select></div></div><button class="btn" type="submit">指派人員</button></form><div id="assignedList" class="scroll-table"></div></section>
+      <div class="admin-user-toolbar">
+       <label class="admin-search"><span class="visually-hidden">搜尋帳號姓名</span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="adminUserSearch" type="search" placeholder="搜尋員工姓名…" autocomplete="off"></label>
+       <label class="admin-compact-filter"><span>篩選角色</span><select id="adminUserRoleFilter"><option value="all">全部角色</option><option value="staff">居服員</option><option value="supervisor">居督</option><option value="admin">管理員</option></select></label>
+       <span class="admin-count" id="adminUserSummary" aria-live="polite">正在載入帳號…</span>
+      </div>
+      <div class="staff-table-shell">
+       <table class="staff-table">
+        <thead><tr><th scope="col">使用者</th><th scope="col">帳號角色</th><th scope="col">使用狀態</th><th scope="col">管理操作</th></tr></thead>
+        <tbody id="usersBody"></tbody>
+       </table>
+      </div>
+      <p class="admin-footnote"><span aria-hidden="true">ⓘ</span> 停用可保留帳號供日後重新啟用；刪除不可復原，但既有交班紀錄仍會保留。</p>
+     </section>
+
+     <section class="panel admin-panel" id="adminCreateSection">
+      <div class="admin-section-header">
+       <div class="admin-section-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M18 8v7M14.5 11.5h7"/></svg></div>
+       <div class="admin-section-text"><span class="admin-section-kicker">02 / 人員建檔</span><h2>建立員工帳號</h2><p>管理員為居服員或居督設定手機帳號與登入密碼，員工無法自行註冊。</p></div>
+      </div>
+      <form id="provisionForm" autocomplete="off" class="admin-form">
+       <div class="admin-form-grid">
+        <div class="field"><label for="staffName">員工姓名 <span class="required-dot">*</span></label><input id="staffName" maxlength="80" required autocomplete="off" placeholder="請輸入員工姓名"></div>
+        <div class="field"><label for="staffPhone">手機門號／登入帳號 <span class="required-dot">*</span></label><input id="staffPhone" type="tel" inputmode="tel" maxlength="20" placeholder="09xxxxxxxx" required autocomplete="off"></div>
+        <div class="field"><label for="staffRole">員工角色</label><select id="staffRole"><option value="staff">居服員</option><option value="supervisor">居督</option></select></div>
+        <div class="field"><label for="staffPassword">登入密碼 <span class="required-dot">*</span></label><input id="staffPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required placeholder="至少 10 字元，含英文與數字"></div>
+        <div class="field"><label for="staffPasswordConfirm">確認登入密碼 <span class="required-dot">*</span></label><input id="staffPasswordConfirm" type="password" minlength="10" maxlength="72" autocomplete="new-password" required placeholder="再輸入一次密碼"></div>
+       </div>
+       <label class="admin-checkbox-line"><input id="showStaffPassword" type="checkbox"> 顯示密碼</label>
+       <p class="admin-footnote">可使用身分證字號格式的英數密碼，但不建議使用實際身分證字號；密碼不會顯示在帳號清單。</p>
+       <div class="admin-form-actions"><button type="submit" id="createStaffBtn" class="btn">＋ 建立員工帳號</button></div>
+      </form>
+      <div id="createdStaffSuccess" class="msg" hidden role="status">帳號建立成功。員工可以直接使用手機門號與管理員設定的密碼登入。</div>
+     </section>
+
+     <section class="panel admin-panel" id="adminCasesSection">
+      <div class="admin-section-header">
+       <div class="admin-section-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l3 3v15H5V3h3z"/><path d="M15 3v4h4M9 12h6M9 16h6"/></svg></div>
+       <div class="admin-section-text"><span class="admin-section-kicker">03 / 個案資訊</span><h2>新增／編輯個案</h2><p>分區填寫基本資料、服務安排與交班重點，方便建立與後續維護。</p></div>
+       <span id="caseEditMode" class="admin-mode-tag">新增模式</span>
+      </div>
+      <form id="caseForm" class="admin-form">
+       <div class="admin-form-section">
+        <div class="admin-form-section-head"><span class="admin-step-number">01</span><div><h3>個案基本資料</h3><p>用於辨識個案與搜尋，代碼建立後不可更改。</p></div></div>
+        <div class="admin-form-grid">
+         <div class="field"><label for="manageCaseId">個案代碼 <span class="required-dot">*</span></label><input id="manageCaseId" required maxlength="40" placeholder="例如 HC-100"></div>
+         <div class="field"><label for="manageCaseName">個案顯示名稱 <span class="required-dot">*</span></label><input id="manageCaseName" required maxlength="100" placeholder="輸入個案顯示名稱"></div>
+         <div class="field"><label for="manageArea">服務區域</label><input id="manageArea" maxlength="100" placeholder="例如 台中市太平區"></div>
+         <div class="field"><label for="manageService">服務項目</label><input id="manageService" maxlength="150" placeholder="例如 居家服務、喘息服務"></div>
+        </div>
+       </div>
+       <div class="admin-form-section">
+        <div class="admin-form-section-head"><span class="admin-step-number">02</span><div><h3>服務狀態與主責人員</h3><p>此處姓名為顯示資訊，不會自動授予個案查閱權限。</p></div></div>
+        <div class="admin-form-grid cols-three">
+         <div class="field"><label for="manageStatus">個案服務狀態</label><select id="manageStatus"><option value="服務中">服務中</option><option value="暫停">暫停</option><option value="結案">結案</option><option value="其他">其他</option></select></div>
+         <div class="field"><label for="manageSupervisorName">主責督導</label><input id="manageSupervisorName" maxlength="80" autocomplete="off" placeholder="主責督導姓名"></div>
+         <div class="field"><label for="manageCaregiverName">主責居服員</label><input id="manageCaregiverName" maxlength="80" autocomplete="off" placeholder="主責居服員姓名"></div>
+        </div>
+       </div>
+       <div class="admin-form-section">
+        <div class="admin-form-section-head"><span class="admin-step-number">03</span><div><h3>交班重點與提醒</h3><p>讓接班者快速掌握需要注意的照顧資訊。</p></div></div>
+        <div class="admin-form-grid">
+         <div class="field"><label for="manageFocus">固定照顧重點</label><textarea id="manageFocus" maxlength="3000" rows="5" placeholder="每行一筆：標題 | 內容&#10;移位安全 | 先確認輪椅煞車固定&#10;備餐習慣 | 先確認飲食禁忌"></textarea><span class="admin-field-hint">每行一個重點，以「標題 | 內容」分隔。</span></div>
+         <div class="field"><label for="manageNote">重要提醒</label><textarea id="manageNote" maxlength="1000" rows="5" placeholder="填寫需要特別留意的交班提醒"></textarea><span class="admin-field-hint">僅記錄必要資訊，避免輸入非必要個人資料。</span></div>
+        </div>
+       </div>
+       <div class="admin-form-actions sticky-actions">
+        <span class="admin-action-help" id="caseFormHelp">填寫完畢後儲存個案資料</span>
+        <div class="action-inline"><button class="btn alt" type="button" id="clearCaseBtn">清除欄位</button><button class="btn" type="submit" id="saveCaseBtn">＋ 新增個案</button></div>
+       </div>
+      </form>
+     </section>
+
+     <section class="panel admin-panel" id="adminAssignmentsSection">
+      <div class="admin-section-header">
+       <div class="admin-section-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10M7 17h10M16 4l3 3-3 3M8 14l-3 3 3 3"/></svg></div>
+       <div class="admin-section-text"><span class="admin-section-kicker">04 / 存取權限</span><h2>個案服務人員指派</h2><p>只有完成指派的人員才能查看該個案的交班紀錄；主責姓名不代表權限已開通。</p></div>
+      </div>
+      <form id="assignForm" class="admin-form">
+       <div class="admin-form-grid">
+        <div class="field"><label for="assignCase">選擇個案</label><select id="assignCase" required></select></div>
+        <div class="field"><label for="assignUser">選擇已啟用人員</label><select id="assignUser" required></select></div>
+       </div>
+       <div class="admin-form-actions"><button class="btn" type="submit">＋ 指派服務人員</button></div>
+      </form>
+      <div id="assignedList" class="admin-assigned-list scroll-table"></div>
+     </section>
+    </div>
    </div>
   </section>
+
  </main>
 </section>
 <div id="deleteUserLayer" class="dialog-layer" hidden>
