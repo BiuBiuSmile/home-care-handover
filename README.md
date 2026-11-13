@@ -2,6 +2,18 @@
 
 獨立研究專案：`BiuBiuSmile/home-care-handover`。網站使用 GitHub Pages，登入與交班資料以 Supabase Auth + PostgreSQL / RLS 管理，不使用 Railway。
 
+## 新功能：24 小時臨時交班室
+
+已整合至「個案交班中心」的第四個標籤 **24 小時臨時交班室**：
+
+- 由兩位已指派、已啟用的居服員 A／B 進行限時文字交接；管理員或該個案的居督可協助建立交班室。
+- 房間從建立時間起 **24 小時** 到期，資料庫強制禁止到期後新增訊息。
+- A、B 都按「完成交班」即可提前關閉。
+- 關閉後原始訊息保留為唯讀，日後獲指派同案的 C 可以查看已結束的交班內容。
+- 重要訊息可轉為「待審核照顧重點」草稿，但不會自動當成正式照顧指示。
+
+資料儲存於 `handover_rooms`／`handover_room_messages`（Supabase RLS），並使用伺服器時間判斷有效期限。聊天室目前為約 15 秒檢查新訊息，沒有推播。詳見 [24 小時臨時交班室操作教學](docs/TEMP_ROOM_GUIDE.md)。
+
 ## 新功能：個案照顧檔案與交班討論
 
 已在既有個案頁新增三個標籤：
@@ -32,6 +44,7 @@
 | `index.html` | 員工登入、管理員建檔／重設密碼、交班工作台 |
 | `portal.js` | 登入、員工密碼維護、個案權限與正式交班流程 |
 | `case-collab.js`／`case-collab.css` | 照顧檔案審核、個案交班討論與手機介面 |
+| `handover-rooms.js`／`handover-rooms.css` | 24 小時 A/B 限時交班室、雙方確認、交班歷史畫面 |
 | `config.js` | Supabase 專案 URL 和公開 Publishable Key |
 | `supabase/schema.sql` | 資料表和 RLS 權限設計 |
 | `supabase/functions/admin-create-staff/index.ts` | 管理員建立帳號或重設員工密碼的受保護伺服器功能 |
