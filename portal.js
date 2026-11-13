@@ -6,7 +6,7 @@
 (function(){
  const $ = id => document.getElementById(id);
  const config = window.CARE_CONFIG || {};
- const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',resetTarget:null};
+ const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',resetTarget:null,deleteTarget:null};
  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
  const roles = {admin:'管理員',supervisor:'居督',staff:'居服員'};
  const when = v => v ? new Date(v).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}) : '';
@@ -41,6 +41,12 @@
      $('staffPassword').type=type;$('staffPasswordConfirm').type=type;
    });
    $('resetPasswordForm').addEventListener('submit',submitResetPassword);
+   $('deleteUserForm').addEventListener('submit',submitDeleteUser);
+   $('cancelDeleteUser').addEventListener('click',closeDeleteUser);
+   $('deleteUserConfirm').addEventListener('input',()=>{
+     $('confirmDeleteUser').disabled=$('deleteUserConfirm').value.trim()!=='刪除';
+   });
+   $('deleteUserLayer').addEventListener('click',e=>{if(e.target===$('deleteUserLayer'))closeDeleteUser()});
    $('cancelResetPassword').addEventListener('click',closeResetPassword);
    $('showResetPassword').addEventListener('change',()=>{
      const type=$('showResetPassword').checked?'text':'password';
@@ -67,13 +73,15 @@
    $('usersBody').addEventListener('click',e=>{
      const b=e.target.closest('[data-reset-profile]');
      if(b){openResetPassword(b.dataset.resetProfile);return}
+     const del=e.target.closest('[data-delete-profile]');
+     if(del){openDeleteUser(del.dataset.deleteProfile);return}
      saveProfileFromRow(e);
    });
    $('assignedList').addEventListener('click',removeAssignment);
    $('handoverForm').addEventListener('submit',saveHandover);
    $('cancelRecord').addEventListener('click',closeHandover);
    $('handoverLayer').addEventListener('click',e=>{if(e.target===$('handoverLayer'))closeHandover()});
-   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHandover();closeResetPassword()}});
+   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHandover();closeResetPassword();closeDeleteUser()}});
    if(!config.SUPABASE_URL || !config.SUPABASE_ANON_KEY || config.SUPABASE_URL.includes('YOUR_') || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.SUPABASE_URL) || !window.supabase?.createClient){
      $('configMessage').hidden=false;
      $('authSubmit').disabled=true;
@@ -175,6 +183,47 @@
      setBusy(form,false);
    }
  }
+ function openDeleteUser(id){
+   if(!canAdmin() || id===state.user?.id)return notify('不能刪除自己的管理員帳號',true);
+   const p=state.profiles.find(x=>x.id===id);
+   if(!p || !['staff','supervisor'].includes(p.role))return notify('僅能刪除居服員或居督帳號；管理員帳號受到保護',true);
+   state.deleteTarget=id;
+   $('deleteUserName').textContent=p.display_name;
+   $('deleteUserForm').reset();
+   $('confirmDeleteUser').disabled=true;
+   $('deleteUserLayer').hidden=false;
+   $('deleteUserConfirm').focus();
+ }
+ function closeDeleteUser(){
+   state.deleteTarget=null;
+   $('deleteUserForm').reset();
+   $('deleteUserLayer').hidden=true;
+   $('confirmDeleteUser').disabled=true;
+ }
+ async function submitDeleteUser(e){
+   e.preventDefault();
+   if(!canAdmin()||!state.deleteTarget)return;
+   const id=state.deleteTarget;
+   const target=state.profiles.find(x=>x.id===id);
+   if(id===state.user.id || !target || !['staff','supervisor'].includes(target.role)){
+     return notify('此帳號不可刪除',true);
+   }
+   if($('deleteUserConfirm').value.trim()!=='刪除'){
+     return notify('請輸入「刪除」後再確認',true);
+   }
+   const form=$('deleteUserForm');
+   setBusy(form,true);
+   try{
+     const data=await invokeAdminUser({action:'delete_user',user_id:id,confirm:'刪除'});
+     closeDeleteUser();
+     notify(data.message||'員工帳號已刪除，交班歷史資料仍保留');
+     await loadAdmin();
+   }catch(error){notify(errText(error),true)}
+   finally{
+     setBusy(form,false);
+     $('confirmDeleteUser').disabled=$('deleteUserConfirm').value.trim()!=='刪除';
+   }
+ }
  function openResetPassword(id){
    if(!canAdmin())return;
    const p=state.profiles.find(x=>x.id===id);
@@ -246,7 +295,7 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {state.user=null;state.profile=null;closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {state.user=null;state.profile=null;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
    if(tab==='admin'&&!canAdmin())return;
@@ -333,10 +382,13 @@
  function renderUsers(){
    $('usersBody').innerHTML=state.profiles.map(p=>{
      const self=p.id===state.user.id;
+     const manageable=!self && (p.role==='staff'||p.role==='supervisor');
      const options=Object.keys(roles).map(role=>'<option value="'+role+'" '+(p.role===role?'selected':'')+'>'+roles[role]+'</option>').join('');
-     const reset=(!self && (p.role==='staff'||p.role==='supervisor'))
+     const reset=manageable
        ? '<button type="button" class="btn alt" data-reset-profile="'+esc(p.id)+'">重設密碼</button>' : '';
-     return '<tr><td><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><small class="muted">'+esc(p.id.slice(0,8))+'…</small>'+(self?' <span class="pill ok">自己</span>':'')+'</td><td><select data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td><td><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'></td><td><div class="action-inline"><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button>'+reset+'</div></td></tr>';
+     const remove=manageable
+       ? '<button type="button" class="btn warn" data-delete-profile="'+esc(p.id)+'">刪除使用者</button>' : '';
+     return '<tr><td><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><small class="muted">'+esc(p.id.slice(0,8))+'…</small>'+(self?' <span class="pill ok">自己</span>':'')+'</td><td><select data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td><td><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'></td><td><div class="action-inline"><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button>'+reset+remove+'</div></td></tr>';
    }).join('')||'<tr><td colspan="4">尚無帳號</td></tr>';
  }
  async function saveProfileFromRow(e){
