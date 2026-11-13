@@ -80,7 +80,7 @@ $$;
 create table public.handovers (
   id uuid primary key default gen_random_uuid(),
   case_id text not null references public.cases(id) on delete cascade,
-  author_id uuid not null references public.profiles(id),
+  author_id uuid references public.profiles(id) on delete set null,
   author_name text not null default '',
   kind text not null check (kind in ('日常照顧','環境與安全','生活習慣','家屬溝通','異常狀況','服務調整')),
   risk text not null check (risk in ('一般','提醒','緊急')),
@@ -210,6 +210,24 @@ revoke execute on function public.is_admin() from public, anon, authenticated;
 revoke execute on function public.can_access_case(text) from public, anon, authenticated;
 revoke execute on function public.mark_case_read(text) from public, anon, authenticated;
 grant execute on function public.is_active(), public.is_admin(), public.can_access_case(text), public.mark_case_read(text) to authenticated;
+
+-- Records survive staff account removal. Deleting auth.users cascades through profiles
+-- and assignments, while handovers.author_id is set NULL (author_name remains).
+create table public.admin_account_events (
+  id uuid primary key default gen_random_uuid(),
+  actor_id uuid not null,
+  target_id uuid not null,
+  target_display_name text not null,
+  target_role text not null check (target_role in ('staff','supervisor')),
+  action text not null default 'delete_user' check (action = 'delete_user'),
+  status text not null default 'initiated' check (status in ('initiated','completed','failed')),
+  created_at timestamptz not null default now(),
+  finished_at timestamptz
+);
+create index admin_account_events_created_idx on public.admin_account_events(created_at desc);
+alter table public.admin_account_events enable row level security;
+revoke all on public.admin_account_events from public, anon, authenticated;
+grant select, insert, update on public.admin_account_events to service_role;
 
 -- ONE-TIME FIRST ADMIN BOOTSTRAP (run manually in SQL editor after signing up).
 -- Replace the phone with your own verified +886 number. NEVER put this in browser JS.
