@@ -61,10 +61,6 @@
       '</article>';
     }).join('')||'<div class="care-empty">尚無交班討論。可先提出問題，之後已指派的同仁便能看到並回覆。</div>';
     $('discussionCount').textContent=state.messages.length+' 則討論';
-    const tail=list.lastElementChild;
-    if(tail && state.panel==='discussion' && !$('careDiscussionPanel').hidden && !state.initialRender){
-      // No automatic scrolling on incoming updates: the reader keeps their position.
-    }
   }
   function setReply(id){
     const msg=state.messages.find(x=>String(x.id)===String(id));
@@ -84,7 +80,7 @@
       b.setAttribute('aria-selected',String(active));
     });
     document.querySelectorAll('[data-care-panel]').forEach(p=>p.hidden=p.dataset.carePanel!==next);
-    if(next==='discussion')loadMessages(false);
+    if(next==='discussion' && state.loaded)loadMessages(false);
   }
   async function loadGuide(){
     const id=state.caseId,seq=state.loadId;
@@ -199,12 +195,14 @@
   }
   async function mount({db,caseId,profile}){
     if(!db||!caseId||!$('careGuideResults')||!$('careDiscussionList'))return;
+    const preferredPanel=state.caseId===caseId?state.panel:'guide';
     destroy();
-    state.db=db;state.caseId=caseId;state.profile=profile;state.panel='guide';
+    state.db=db;state.caseId=caseId;state.profile=profile;state.panel=preferredPanel;
     $('careGuideResults').innerHTML='<p class="care-empty">正在載入照顧重點…</p>';
     $('careDiscussionList').innerHTML='<p class="care-empty">正在載入交班討論…</p>';
-    cancelReply();bind();changeTab('guide');
+    cancelReply();bind();changeTab(preferredPanel);
     await Promise.all([loadGuide(),loadMessages(false)]);
+    if(state.caseId===caseId)state.loaded=true;
     state.timer=setInterval(()=>{
       if(document.visibilityState==='visible' && state.panel==='discussion' && state.caseId===caseId && !$('caseFocus')?.hidden){
         loadMessages(false);
