@@ -52,6 +52,12 @@ returning id, role, active, must_change_password;
 7. 在管理員後台建立自己的**手機帳號**，登入後更改初始密碼，然後由第一位管理員在後台把手機帳號角色改為「管理員」。
 8. 確認新手機管理員可登入後，停用臨時 Email 管理員，並從 GitHub 刪除 `bootstrap-admin.html`。留至少一位啟用中的管理員，不要刪除唯一管理員。
 
+## 停用一般使用者自行註冊（必要）
+
+在 Supabase Dashboard → **Authentication → Sign In / Providers**，將 **Allow new users to sign up** 改成 **OFF** 並儲存。此選項屬於 Supabase 後台設定，單純隱藏網站「註冊」按鈕是不夠的。
+
+管理員經 `admin-create-staff` 的伺服器端管理權限建立帳號，不依賴公開自助註冊。**建議在初始化第一位管理員後立即關閉此選項**。
+
 ## Supabase Phone Provider
 
 到 [Authentication → Sign In / Providers](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/auth/providers) 啟用 Phone 登入方式。**手機＋密碼**與「每次輸入簡訊 OTP」是不同流程；後台建立並由管理員確認的門號，登入時不會主動要求傳簡訊。如 Supabase 畫面要求 SMS Provider，再依介面提示處理；未實測前不要直接用真實個案資料。
