@@ -268,7 +268,17 @@
    }
  }
  async function setSession(session){
-   if(!session?.user){state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];show('authScreen');return;}
+   if(!session?.user){
+     state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
+     state.current=null;state.caseOpen=false;state.casePage=1;
+     $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
+     show('authScreen');return;
+   }
+   if(state.user?.id!==session.user.id){
+     state.cases=[];state.records=[];state.reads=[];state.current=null;
+     state.caseOpen=false;state.casePage=1;state.browserScroll=0;
+     $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
+   }
    state.user=session.user;
    await refreshIdentity();
  }
@@ -294,7 +304,7 @@
      }
      $('identity').textContent=state.profile.display_name+'｜'+(roles[state.profile.role]||state.profile.role);
      $('adminTab').hidden=!canAdmin();
-     show('appScreen');await refreshDashboard(false);
+     await refreshDashboard(false);show('appScreen');
    }catch(e){notify(errText(e),true);show('authScreen')}
  }
  async function logout(){
