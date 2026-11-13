@@ -6,7 +6,7 @@
 (function(){
  const $ = id => document.getElementById(id);
  const config = window.CARE_CONFIG || {};
- const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',verifyPhone:null};
+ const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases'};
  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
  const roles = {admin:'管理員',supervisor:'居督',staff:'居服員'};
  const when = v => v ? new Date(v).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}) : '';
@@ -19,7 +19,7 @@
    const el=$('authMessage');el.textContent=message;el.className='msg'+(failed?' error':'');
  }
  function show(screen){
-   ['authScreen','pendingScreen','appScreen'].forEach(x=>$(x).hidden=x!==screen);
+   ['authScreen','changeScreen','pendingScreen','appScreen'].forEach(x=>$(x).hidden=x!==screen);
  }
  function setBusy(form,busy){
    Array.from(form.querySelectorAll('button,input,select,textarea')).forEach(el=>el.disabled=busy);
@@ -33,9 +33,11 @@
  }
  async function init(){
    $('authForm').addEventListener('submit',handleAuth);
-   $('verifyForm').addEventListener('submit',handleVerifySms);
-   $('verifyBack').addEventListener('click',hideVerifySms);
-   $('resendSms').addEventListener('click',resendVerifySms);
+   $('changePasswordForm').addEventListener('submit',changeFirstPassword);
+   $('changeLogout').addEventListener('click',logout);
+   $('provisionForm').addEventListener('submit',createStaffAccount);
+   $('copyIssued').addEventListener('click',()=>{const v=$('issuedPassword').value;if(v)navigator.clipboard?.writeText(v).then(()=>notify('已複製初始密碼，請私下安全交付本人')).catch(()=>notify('複製失敗，請手動選取複製',true))});
+   $('clearIssued').addEventListener('click',clearIssuedCredentials);
    $('pendingReload').addEventListener('click',refreshIdentity);
    $('pendingLogout').addEventListener('click',logout);
    $('logoutBtn').addEventListener('click',logout);
@@ -82,73 +84,62 @@
    if(/^\+8869\d{8}$/.test(raw))return raw;
    throw Error('請輸入有效的台灣手機門號，例如 0912345678 或 +886912345678');
  }
- function showVerifySms(phone){
-   state.verifyPhone=phone;
-   $('verifyHint').textContent='已向 '+phone+' 發送一次性登入驗證碼。請輸入收到的簡訊；首次使用仍需管理員審核。';
-   $('authForm').hidden=true;
-   $('verifyForm').hidden=false;
-   $('smsCode').value='';
-   $('authMessage').textContent='';
-   $('smsCode').focus();
- }
- function hideVerifySms(){
-   state.verifyPhone=null;
-   $('verifyForm').hidden=true;
-   $('authForm').hidden=false;
-   $('smsCode').value='';
-   $('authMessage').textContent='';
- }
  async function handleAuth(e){
-   e.preventDefault();
-   if(!state.db)return;
-   const form=$('authForm');
+   e.preventDefault();if(!state.db)return;
+   const form=$('authForm'),password=$('password').value;
    setBusy(form,true);
    try{
      const phone=phoneE164($('phone').value);
-     await checkQuery(
-       await state.db.auth.signInWithOtp({phone, options:{shouldCreateUser:true}}),
-       '傳送簡訊驗證碼'
-     );
-     showVerifySms(phone);
+     await checkQuery(await state.db.auth.signInWithPassword({phone,password}),'登入驗證');
+     $('password').value='';
+     await refreshIdentity();
    }catch(error){
-     const msg=errText(error);
-     authMessage(/phone signups? (?:are |is )?disabled/i.test(msg)
-       ?'Supabase 尚未啟用手機登入。請到 Authentication → Sign In / Providers → Phone 開啟，並設定 SMS 服務。'
-       :msg,true);
+     authMessage('登入失敗，請確認管理員已建立此帳號，以及手機號碼和密碼是否正確。',true);
    }finally{setBusy(form,false)}
  }
- async function handleVerifySms(e){
-   e.preventDefault();
-   if(!state.db || !state.verifyPhone)return;
-   const form=$('verifyForm'), token=$('smsCode').value.trim();
-   if(!/^\d{4,8}$/.test(token)){
-     authMessage('請輸入簡訊中的數字驗證碼',true);return;
-   }
-   setBusy(form,true);
+ async function changeFirstPassword(e){
+   e.preventDefault();if(!state.db || !state.user)return;
+   const password=$('newPassword').value;
+   const confirm=$('confirmPassword').value;
+   const box=$('changeMessage');
+   const fail=m=>{box.textContent=m;box.className='msg error'};
+   if(password.length<12 || password.length>72)return fail('新密碼請設定 12～72 個字元');
+   if(password!==confirm)return fail('兩次輸入的新密碼不一致');
+   if(/^[a-z][12]\d{8}$/i.test(password))return fail('新密碼不能使用身分證字號');
+   const form=$('changePasswordForm');setBusy(form,true);
    try{
-     await checkQuery(await state.db.auth.verifyOtp({
-       phone:state.verifyPhone,token,type:'sms'
-     }),'驗證手機門號');
-     hideVerifySms();
+     await checkQuery(await state.db.auth.updateUser({password}),'設定新密碼');
+     form.reset();
      await refreshIdentity();
-     notify('手機驗證成功！若為新帳號，須由管理員核准後才能查閱個案');
-   }catch(error){authMessage(errText(error),true)}
+     notify('已設定個人密碼，可以開始使用系統');
+   }catch(error){fail(errText(error))}
    finally{setBusy(form,false)}
  }
- async function resendVerifySms(){
-   if(!state.db || !state.verifyPhone)return;
-   const b=$('resendSms');b.disabled=true;
+ function clearIssuedCredentials(){
+   $('issuedCredentials').hidden=true;
+   $('issuedPhone').value='';
+   $('issuedPassword').value='';
+ }
+ async function createStaffAccount(e){
+   e.preventDefault();if(!canAdmin())return;
+   const form=$('provisionForm'),display_name=$('staffName').value.trim();
+   let phone;
+   try{phone=phoneE164($('staffPhone').value)}catch(error){notify(errText(error),true);return}
+   const role=$('staffRole').value;
+   if(!display_name || !['staff','supervisor'].includes(role))return notify('請完整填寫員工姓名及角色',true);
+   clearIssuedCredentials();setBusy(form,true);
    try{
-     await checkQuery(
-       await state.db.auth.signInWithOtp({
-         phone:state.verifyPhone,
-         options:{shouldCreateUser:true}
-       }),
-       '重新發送簡訊'
-     );
-     authMessage('已再次申請發送驗證碼。請注意簡訊發送間隔與供應商費用。',false);
-   }catch(error){authMessage(errText(error),true)}
-   finally{b.disabled=false}
+     const {data,error}=await state.db.functions.invoke('admin-create-staff',{body:{display_name,phone,role}});
+     if(error)throw Error('建立帳號失敗，請檢查 Edge Function 與管理員登入狀態');
+     if(!data?.initial_password)throw Error(data?.message || '帳號尚未成功建立');
+     $('issuedPhone').value=phone;
+     $('issuedPassword').value=data.initial_password;
+     $('issuedCredentials').hidden=false;
+     form.reset();
+     await loadAdmin();
+     notify('員工帳號建立成功，請安全交付初始密碼');
+   }catch(error){notify(errText(error),true)}
+   finally{setBusy(form,false)}
  }
  async function setSession(session){
    if(!session?.user){state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];show('authScreen');return;}
@@ -167,8 +158,9 @@
        $('pendingMessage').textContent='目前門號尚未完成簡訊驗證，暫時不能查閱任何個案資訊。請先完成驗證，必要時聯絡管理員確認 Phone 簡訊服務設定。';
        show('pendingScreen');return;
      }
-     const r=await state.db.from('profiles').select('id,display_name,role,active').eq('id',user.id).single();
+     const r=await state.db.from('profiles').select('id,display_name,role,active,must_change_password').eq('id',user.id).single();
      state.profile=await checkQuery(r,'取得帳號權限');
+     if(state.profile.must_change_password){show('changeScreen');return;}
      if(!state.profile.active){
        $('pendingTitle').textContent='帳號尚未啟用';
        $('pendingMessage').textContent='已登入 '+(state.profile.display_name||user.phone||user.email)+'，但管理員尚未啟用您的帳號。請先完成審核，開通後再指派個案。';
@@ -183,7 +175,7 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {state.user=null;state.profile=null;show('authScreen');notify('已登出')}
+   else {state.user=null;state.profile=null;clearIssuedCredentials();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
    if(tab==='admin'&&!canAdmin())return;
@@ -259,7 +251,7 @@
  async function loadAdmin(){
    if(!canAdmin())return;
    const [p,a]=await Promise.all([
-     state.db.from('profiles').select('id,display_name,role,active,created_at').order('created_at',{ascending:false}),
+     state.db.from('profiles').select('id,display_name,role,active,must_change_password,created_at').order('created_at',{ascending:false}),
      state.db.from('case_assignments').select('case_id,user_id,created_at').order('created_at',{ascending:false})
    ]);
    state.profiles=await checkQuery(p,'取得帳號清單');
