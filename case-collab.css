@@ -1,0 +1,64 @@
+/* 安護交班：照顧檔案／交班討論／正式交班，桌機與手機共用 */
+.care-case-header{margin-bottom:21px;align-items:flex-start}
+.care-case-header h2{margin:0 0 6px;font-size:27px;color:#163748}
+.care-case-hint{font-size:12px;color:#168374;background:#eaf7f2;border:1px solid #d5ece4;padding:9px 12px;border-radius:100px}
+.care-tabs{display:flex;gap:8px;background:#f3f7f8;border:1px solid #e0e9ec;border-radius:15px;padding:6px;margin:0 0 22px;overflow-x:auto;scrollbar-width:thin}
+.care-tab{flex:1;min-width:130px;white-space:nowrap;padding:13px 12px;border:0;border-radius:10px;background:transparent;color:#58717f;font-size:14px;font-weight:750;transition:background .15s ease,color .15s ease}
+.care-tab:hover{color:#0b8077;background:#fdfefe}
+.care-tab.active{background:#fff;color:#067f76;box-shadow:0 3px 12px rgba(9,62,81,.11)}
+.care-tab-count,.care-count{display:inline-grid;place-items:center;min-width:27px;padding:3px 8px;background:#e8f3f0;color:#0d776d;font-size:12px;font-weight:800;border-radius:30px;vertical-align:middle}
+.care-count.pending{background:#fff1d9;color:#956010}
+.care-tab-panel{min-height:260px}
+.care-section-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:14px 0 13px}
+.care-section-head h3{font-size:19px;color:#163c4c;margin:0 0 5px}
+.care-section-head p{margin:0;color:#6f8591;line-height:1.6;font-size:13px}
+.care-subhead{margin-top:27px;padding-top:17px;border-top:1px solid #e6edef}
+.care-entry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.care-entry,.care-tab-panel .focus-item{border:1px solid #e0e9ed;background:#fbfcfd;border-radius:13px;padding:17px;margin:0;line-height:1.65;min-width:0}
+.care-tab-panel .focus-item strong{color:#1b4c57;display:block;margin-bottom:5px}
+.care-entry-header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.care-category{font-size:11px;background:#e5f4f0;color:#0c7b72;border-radius:20px;padding:4px 9px;font-weight:750}
+.care-entry-date{font-size:11px;color:#869aa6}
+.care-entry h4{margin:12px 0 7px;font-size:16px;color:#163748}
+.care-entry p{color:#435f70;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 13px;font-size:14px}
+.care-entry-footer{border-top:1px solid #e9f0f2;margin-top:11px;padding-top:12px;font-size:12px;color:#748a96;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.care-review-actions{display:flex;gap:7px;flex-wrap:wrap}
+.care-mini{font-size:12px;min-height:36px!important;padding:7px 12px!important}
+.care-empty{grid-column:1/-1;padding:24px 16px;border:1px dashed #d7e5e9;background:#f8fbfc;border-radius:12px;color:#718b99;text-align:center;font-size:13px;line-height:1.7;margin:0}
+.care-rejected{margin-top:13px;color:#6c7f88;font-size:13px}
+.care-rejected summary{cursor:pointer;padding:10px 0;font-weight:750}
+.care-rejected .care-entry{margin:9px 0}
+.care-input-panel{margin-top:25px;padding:20px;border-radius:14px;border:1px solid #cae2dd;background:linear-gradient(150deg,#f5fbf9,#fff)}
+.care-input-panel h3{margin:0 0 4px;color:#18504d;font-size:18px}
+.care-input-panel .help{margin:5px 0 14px}
+.care-input-panel .field label,.care-chat-form .field label{font-size:13px;font-weight:700;color:#436273}
+.care-input-panel textarea,.care-chat-form textarea{background:#fff;line-height:1.65}
+.care-form-actions{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap;margin-top:12px}
+.care-notice{background:#e8f7f2;color:#13694f;border-radius:10px;padding:11px 12px;font-size:13px;margin:10px 0}
+.care-notice.error{background:#fff0ed;color:#af493a}
+.care-urgent-note{border-left:3px solid #d9974e;background:#fff9ee;padding:12px 15px;border-radius:8px;font-size:13px;color:#92642c;line-height:1.7;margin-bottom:20px}
+.care-discussion-list{display:flex;flex-direction:column;gap:12px;margin:20px 0}
+.care-message{background:#fbfcfd;border:1px solid #e0ebef;border-radius:15px;padding:16px 18px}
+.care-message-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.care-chat-avatar{display:grid;place-items:center;width:34px;height:34px;flex-shrink:0;background:#dff2ed;color:#0b8274;border-radius:12px;font-size:14px;font-weight:800}
+.care-message-top strong{color:#244758;font-size:14px}
+.care-type{font-size:11px;border-radius:100px;background:#eaf4f2;color:#178276;padding:4px 9px}
+.care-message-top time{font-size:11px;color:#8299a4;margin-left:auto}
+.care-message p{font-size:14px;line-height:1.8;color:#3c5564;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0}
+.care-message-quote,.care-reply-quote{font-size:12px;color:#697e89;background:#f0f5f7;border-left:3px solid #9ab9c0;border-radius:6px;padding:9px 11px;margin-top:10px;overflow-wrap:anywhere}
+.care-message-actions{display:flex;flex-wrap:wrap;gap:12px;border-top:1px solid #e9eff2;margin-top:14px;padding-top:12px}
+.care-message-actions button{border:0;background:transparent;font-size:12px;font-weight:750;color:#147d74;padding:4px 2px;min-height:28px}
+.care-message-actions button:hover{text-decoration:underline}
+.care-chat-form{border:1px solid #cfe3e0;background:#f6fbfa;border-radius:15px;padding:18px;margin-top:22px}
+.care-chat-form h4{margin:0 0 8px;color:#234b50;font-size:16px}
+.care-chat-form .care-reply-cancel{justify-content:flex-end}
+.care-chat-form .care-reply-cancel .btn{font-size:12px;padding:8px;min-height:40px}
+.care-history-header{align-items:flex-start;margin-bottom:15px}
+.care-history-header h3{margin:0 0 4px;font-size:19px;color:#1a3e4d}
+.care-history-header p{margin:0}
+.care-read-toolbar{padding:12px 14px;border:1px solid #dbe9e8;background:#f2f9f7;border-radius:10px;margin:15px 0}
+.care-read-toolbar .help{margin:0}
+.care-tab-panel .record{margin:12px 0}
+@media(max-width:850px){.care-entry-grid{grid-template-columns:1fr}.care-case-hint{display:none}}
+@media(max-width:600px){.care-case-header h2{font-size:22px}.care-tabs{gap:4px;padding:4px}.care-tab{min-width:104px;font-size:12px;padding:11px 9px}.care-section-head{align-items:flex-start}.care-section-head h3{font-size:17px}.care-input-panel,.care-chat-form{padding:14px}.care-form-actions .btn{width:100%}.care-message{padding:13px}.care-message-top time{margin-left:43px}.care-history-header{flex-direction:column;gap:12px}.care-history-header .btn{width:100%}.care-read-toolbar{flex-direction:column;align-items:stretch}.care-read-toolbar .btn{width:100%}.care-mini{padding:8px 10px!important}}
+@media(prefers-reduced-motion:reduce){.care-tab{transition:none}}
