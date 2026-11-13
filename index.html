@@ -89,23 +89,20 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
    <div class="stack">
     <section class="panel">
      <h2>建立員工帳號</h2>
-     <p class="help">由最高權限管理員建立帳號，員工不能自行註冊。系統會產生一組一次性初始密碼，僅在建立成功當下顯示，請私下交給本人。員工第一次登入必須更改密碼；不蒐集身分證字號作為密碼。</p>
-     <form id="provisionForm">
+     <p class="help">由管理員填寫員工姓名、手機帳號與登入密碼。建立後居服員可以直接使用這組密碼登入，不再強制改密碼。請私下安全告知本人，不使用身分證字號或手機號碼當密碼。</p>
+     <form id="provisionForm" autocomplete="off">
       <div class="split">
        <div class="field"><label for="staffName">員工姓名</label><input id="staffName" maxlength="80" required autocomplete="off"></div>
        <div class="field"><label for="staffPhone">手機門號（登入帳號）</label><input id="staffPhone" type="tel" inputmode="tel" maxlength="20" placeholder="09xxxxxxxx" required autocomplete="off"></div>
        <div class="field"><label for="staffRole">員工角色</label><select id="staffRole"><option value="staff">居服員</option><option value="supervisor">居督</option></select></div>
+       <div class="field"><label for="staffPassword">管理員設定密碼（至少 10 字元，含英文與數字）</label><input id="staffPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></div>
+       <div class="field"><label for="staffPasswordConfirm">再次確認密碼</label><input id="staffPasswordConfirm" type="password" minlength="10" maxlength="72" autocomplete="new-password" required></div>
       </div>
+      <label class="help"><input id="showStaffPassword" type="checkbox" style="width:18px;min-height:18px;vertical-align:middle"> 暫時顯示輸入的密碼</label>
+      <p class="help">密碼僅透過加密連線交給 Supabase Auth 驗證與儲存雜湊值，不會顯示於員工清單，也不會提供「查看舊密碼」功能。</p>
       <button type="submit" id="createStaffBtn" class="btn">建立員工帳號</button>
      </form>
-     <div id="issuedCredentials" class="msg" hidden role="status">
-       <strong>帳號建立成功｜請僅私下交付當事人</strong>
-       <p class="help">初始密碼只顯示這一次；請勿拍照公開或張貼群組。</p>
-       <div class="field"><label>員工手機帳號</label><input id="issuedPhone" readonly></div>
-       <div class="field"><label>一次性初始密碼</label><input id="issuedPassword" readonly></div>
-       <button type="button" class="btn alt" id="copyIssued">複製初始密碼</button>
-       <button type="button" class="btn alt" id="clearIssued">關閉並清除顯示</button>
-     </div>
+     <div id="createdStaffSuccess" class="msg" hidden role="status">帳號建立成功。員工可以直接使用手機門號與管理員設定的密碼登入。</div>
     </section>
     <section class="panel"><div class="toolbar"><h2>帳號與權限管理</h2><button class="btn alt" type="button" id="reloadAdmin">重新整理</button></div><p class="help">只有管理員可啟用帳號、調整角色。新使用者預設未啟用，請確認身分後再開通。</p><div class="scroll-table"><table><thead><tr><th>使用者</th><th>角色</th><th>啟用</th><th>操作</th></tr></thead><tbody id="usersBody"></tbody></table></div></section>
     <section class="panel"><h2>新增／編輯個案</h2><p class="help">為保護個資，請先使用虛構測試個案；正式上線須完成資安與適法性確認。</p><form id="caseForm"><div class="split"><div class="field"><label for="manageCaseId">個案代碼（新增後不可改）</label><input id="manageCaseId" required maxlength="40" placeholder="例如 HC-100"></div><div class="field"><label for="manageCaseName">個案顯示名稱</label><input id="manageCaseName" required maxlength="100"></div><div class="field"><label for="manageArea">服務區域</label><input id="manageArea" maxlength="100"></div><div class="field"><label for="manageService">服務項目</label><input id="manageService" maxlength="150"></div></div><div class="field"><label for="manageFocus">固定照顧重點（每行：標題 | 內容）</label><textarea id="manageFocus" maxlength="3000" placeholder="移位安全 | 先確認煞車固定&#10;備餐習慣 | 需先確認飲食禁忌"></textarea></div><div class="field"><label for="manageNote">重要提醒</label><textarea id="manageNote" maxlength="1000"></textarea></div><div class="action-inline"><button class="btn" type="submit" id="saveCaseBtn">新增個案</button><button class="btn alt" type="button" id="clearCaseBtn">清除欄位</button></div></form></section>
@@ -114,6 +111,18 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   </section>
  </main>
 </section>
+<div id="resetPasswordLayer" class="dialog-layer" hidden>
+ <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="resetPasswordTitle">
+  <h2 id="resetPasswordTitle">管理員重設員工密碼</h2>
+  <p class="help">員工：<strong id="resetStaffName"></strong>。重設後，員工可使用新密碼重新登入；請以安全方式個別告知本人。</p>
+  <form id="resetPasswordForm" autocomplete="off">
+   <div class="field"><label for="resetPassword">新密碼（至少 10 字元，含英文與數字）</label><input id="resetPassword" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
+   <div class="field"><label for="resetPasswordConfirm">再次確認新密碼</label><input id="resetPasswordConfirm" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
+   <label class="help"><input id="showResetPassword" type="checkbox" style="width:18px;min-height:18px;vertical-align:middle"> 暫時顯示密碼</label>
+   <footer><button class="btn alt" type="button" id="cancelResetPassword">取消</button><button class="btn" type="submit" id="submitResetPassword">確認重設密碼</button></footer>
+  </form>
+ </section>
+</div>
 <div id="handoverLayer" class="dialog-layer" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="handoverTitle"><h2 id="handoverTitle">新增交班紀錄</h2><p class="help">紀錄會保存在個案歷程中，只有已授權人員可以查閱。重大異常仍須立即通知督導。</p><form id="handoverForm"><div class="split"><div class="field"><label for="recordKind">交班類型</label><select id="recordKind" required><option>日常照顧</option><option>環境與安全</option><option>生活習慣</option><option>家屬溝通</option><option>異常狀況</option><option>服務調整</option></select></div><div class="field"><label for="recordRisk">重要程度</label><select id="recordRisk" required><option>一般</option><option>提醒</option><option>緊急</option></select></div></div><div class="field"><label for="recordSummary">交班主旨</label><input id="recordSummary" maxlength="100" required></div><div class="field"><label for="recordDescription">交班內容與下次注意事項</label><textarea id="recordDescription" maxlength="2000" minlength="8" required></textarea></div><div class="field"><label for="recordExpires">提醒有效期限（可空白）</label><input id="recordExpires" type="date"></div><label class="help"><input type="checkbox" id="urgentAck" style="min-height:18px;width:18px;vertical-align:middle"> 如屬重大異常，已依機構規定即時通知督導</label><footer><button type="button" class="btn alt" id="cancelRecord">取消</button><button type="submit" class="btn" id="submitRecord">儲存交班</button></footer></form></section></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="./config.js"></script>
