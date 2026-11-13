@@ -448,12 +448,10 @@
    const c=selectedCase(),root=$('caseDetail');
    if(!c){root.innerHTML='<h2>尚無個案</h2><p class="muted">請由管理員建立個案並完成指派，才會顯示交班內容。</p>';return;}
    const rec=recordsFor(c.id);
-   const focus=Array.isArray(c.focus)?c.focus:[];
    const rlist=rec.map(r=>{
      const badge=r.risk==='一般'?'':('<span class="pill '+(r.risk==='緊急'?'critical':'')+'">'+esc(r.risk)+'</span>');
      return '<article class="record"><div class="record-head"><strong>'+esc(r.summary)+' '+badge+'</strong><small>'+when(r.created_at)+'</small></div><small>'+esc(r.kind)+'｜記錄人：'+esc(r.author_name)+'</small><p>'+esc(r.description)+'</p>'+(r.expires_on?'<small>提醒期限：'+esc(r.expires_on)+'</small>':'')+'</article>';
    }).join('');
-   const focusHtml=focus.map(item=>'<div class="focus-item"><strong>'+esc(Array.isArray(item)?item[0]:item?.title)+'</strong>'+esc(Array.isArray(item)?item[1]:item?.body)+'</div>').join('');
    root.innerHTML=
      '<div class="toolbar care-case-header"><div><h2>'+esc(c.name)+'</h2>'+
      '<div class="help">'+esc(c.id)+' · '+esc(c.area)+'｜'+esc(c.service)+'</div>'+
@@ -466,17 +464,17 @@
        '<button class="care-tab" data-care-tab="history" role="tab" aria-selected="false" type="button">正式交班 <span class="care-tab-count">'+rec.length+'</span></button>'+
      '</div>'+
      '<section data-care-panel="guide" class="care-tab-panel">'+
-       '<div class="care-section-head"><div><h3>原有固定照顧重點</h3><p>由管理員在個案資料中維護，供新接班者快速閱讀。</p></div></div>'+
-       '<div class="care-entry-grid">'+(focusHtml||'<p class="care-empty">尚未設定原有固定重點。</p>')+'</div>'+
-       (c.note?'<div class="msg error">'+esc(c.note)+'</div>':'')+
+       '<div class="care-unified-head"><div><h3>照顧重點</h3><p>所有照顧重點集中顯示；標示「待確認」的內容，須經居督或管理員審核才能正式採用。</p></div>'+
+       '<div class="care-unified-actions"><button type="button" class="btn" id="guideAddBtn" aria-expanded="false" aria-controls="careGuideEditor">＋ 新增重點</button>'+
+       '<button type="button" class="btn alt" id="refreshGuideBtn">↻ 更新</button></div></div>'+
+       '<div id="guideNotice" class="care-notice" role="status" hidden></div>'+
        '<div id="careGuideResults"><p class="care-empty">正在載入照顧重點…</p></div>'+
-       '<section class="care-input-panel"><h3>＋ 提交新的照顧重點</h3><p class="help">已指派的居服員可提出日常照顧建議。經居督或管理員審核後才列入正式照顧重點。</p>'+
+       '<section class="care-input-panel" id="careGuideEditor" hidden><h3>新增照顧重點</h3><p class="help">已指派的居服員可提出照顧建議，經居督或管理員審核後才列入正式參考。</p>'+
          '<form id="careGuideForm">'+
            '<div class="split"><div class="field"><label for="guideCategory">重點類別</label><select id="guideCategory" required><option>生活習慣</option><option>備餐與飲食</option><option>移位與安全</option><option>沐浴清潔</option><option>溝通與家屬</option><option>其他</option></select></div>'+
            '<div class="field"><label for="guideTitle">重點標題</label><input id="guideTitle" required minlength="2" maxlength="100" placeholder="例如：洗澡前先確認防滑椅"></div></div>'+
            '<div class="field"><label for="guideDetail">具體照顧方式與注意事項</label><textarea id="guideDetail" required minlength="5" maxlength="2000" rows="4" placeholder="描述已確認的照顧習慣與注意事項。請只填必要資訊，不輸入身分證、電話等非必要個資。"></textarea></div>'+
-           '<div id="guideNotice" class="care-notice" role="status" hidden></div>'+
-           '<div class="care-form-actions"><button class="btn" id="guideSaveBtn" type="submit">提交重點給居督確認</button></div>'+
+           '<div class="care-form-actions"><button class="btn alt" id="guideCancelBtn" type="button">取消</button><button class="btn" id="guideSaveBtn" type="submit">提交重點給居督確認</button></div>'+
          '</form></section>'+
      '</section>'+
      '<section data-care-panel="discussion" id="careDiscussionPanel" class="care-tab-panel" hidden>'+
@@ -503,7 +501,7 @@
    $('newHandoverBtn').addEventListener('click',openHandover);
    if($('readCaseBtn'))$('readCaseBtn').addEventListener('click',markRead);
    if(window.CareCollab){
-      window.CareCollab.mount({db:state.db,caseId:c.id,profile:state.profile}).catch(e=>notify('載入交班討論失敗：'+errText(e),true));
+      window.CareCollab.mount({db:state.db,caseId:c.id,profile:state.profile,focus:c.focus,note:c.note}).catch(e=>notify('載入交班討論失敗：'+errText(e),true));
    }
    if(window.HandoverRooms){
       window.HandoverRooms.mount({db:state.db,caseId:c.id,profile:state.profile,user:state.user})
