@@ -309,7 +309,7 @@
    try{
      const db=state.db;
      const [c,r,reads]=await Promise.all([
-       db.from('cases').select('id,name,area,service,focus,note,created_at').order('created_at',{ascending:false}),
+       db.from('cases').select('id,name,area,service,status,supervisor_name,caregiver_name,focus,note,created_at').order('created_at',{ascending:false}),
        db.from('handovers').select('id,case_id,author_name,kind,risk,summary,description,expires_on,created_at').order('created_at',{ascending:false}).limit(1000),
        db.from('case_reads').select('case_id,read_at').eq('user_id',state.user.id)
      ]);
@@ -329,8 +329,8 @@
  }
  function renderCaseList(){
    const term=$('caseSearch').value.trim().toLowerCase();
-   const cases=state.cases.filter(x=>(x.id+x.name+x.area).toLowerCase().includes(term));
-   $('caseList').innerHTML=cases.map(c=>'<button type="button" class="case-button '+(state.current===c.id?'active':'')+'" data-case="'+esc(c.id)+'"><strong>'+esc(c.name)+(isUnread(c)?'<span class="pill">待閱</span>':'')+'</strong><small>'+esc(c.id)+'｜'+esc(c.area)+' · '+esc(c.service)+'</small></button>').join('')||'<p class="muted">沒有符合條件的個案。管理員可先建立個案，並指派服務人員。</p>';
+   const cases=state.cases.filter(x=>(x.id+x.name+x.area+(x.status||'')+(x.supervisor_name||'')+(x.caregiver_name||'')).toLowerCase().includes(term));
+   $('caseList').innerHTML=cases.map(c=>'<button type="button" class="case-button '+(state.current===c.id?'active':'')+'" data-case="'+esc(c.id)+'"><strong>'+esc(c.name)+(c.status && c.status!=='服務中'?'<span class="pill">'+esc(c.status)+'</span>':'')+(isUnread(c)?'<span class="pill">待閱</span>':'')+'</strong><small>'+esc(c.id)+'｜'+esc(c.area)+' · '+esc(c.service)+'</small></button>').join('')||'<p class="muted">沒有符合條件的個案。管理員可先建立個案，並指派服務人員。</p>';
  }
  function renderDetail(){
    const c=selectedCase(),root=$('caseDetail');
@@ -342,7 +342,7 @@
      return '<article class="record"><div class="record-head"><strong>'+esc(r.summary)+' '+badge+'</strong><small>'+when(r.created_at)+'</small></div><small>'+esc(r.kind)+'｜記錄人：'+esc(r.author_name)+'</small><p>'+esc(r.description)+'</p>'+(r.expires_on?'<small>提醒期限：'+esc(r.expires_on)+'</small>':'')+'</article>';
    }).join('');
    const focusHtml=focus.map(item=>'<div class="focus-item"><strong>'+esc(Array.isArray(item)?item[0]:item?.title)+'</strong>'+esc(Array.isArray(item)?item[1]:item?.body)+'</div>').join('');
-   root.innerHTML='<div class="toolbar"><div><h2>'+esc(c.name)+'</h2><div class="help">'+esc(c.id)+' · '+esc(c.area)+'｜'+esc(c.service)+'</div></div><button class="btn" type="button" id="newHandoverBtn">＋ 新增交班</button></div>'
+   root.innerHTML='<div class="toolbar"><div><h2>'+esc(c.name)+'</h2><div class="help">'+esc(c.id)+' · '+esc(c.area)+'｜'+esc(c.service)+'</div><div class="help">服務狀態：'+esc(c.status||'未設定')+'｜主責督導：'+esc(c.supervisor_name||'未設定')+'｜主責居服員：'+esc(c.caregiver_name||'未設定')+'</div></div><button class="btn" type="button" id="newHandoverBtn">＋ 新增交班</button></div>'
       +'<h3>固定照顧重點</h3>'+(focusHtml||'<p class="muted">尚未設定固定重點</p>')+(c.note?'<div class="msg error">'+esc(c.note)+'</div>':'')
       +'<div class="toolbar" style="margin-top:21px"><h3>歷史交班（'+rec.length+' 筆）</h3><div class="action-inline">'+(isUnread(c)?'<span class="pill">有未讀紀錄</span><button class="btn alt" id="readCaseBtn" type="button">✓ 我已閱讀</button>':'<span class="pill ok">最新交班已讀</span>')+'</div></div>'
       +'<div class="help">交班依建立時間排序；原始紀錄不允許從使用者端修改或刪除。</div>'+(rlist||'<p class="muted">目前尚無交班紀錄。</p>');
@@ -413,7 +413,7 @@
  function focusToText(arr){return (Array.isArray(arr)?arr:[]).map(x=>Array.isArray(x)?x.join(' | '):[x.title,x.body].join(' | ')).join('\n')}
  async function saveCase(e){
    e.preventDefault();if(!canAdmin())return;
-   const payload={id:$('manageCaseId').value.trim(),name:$('manageCaseName').value.trim(),area:$('manageArea').value.trim(),service:$('manageService').value.trim(),focus:focusFromText($('manageFocus').value),note:$('manageNote').value.trim()};
+   const payload={id:$('manageCaseId').value.trim(),name:$('manageCaseName').value.trim(),area:$('manageArea').value.trim(),service:$('manageService').value.trim(),status:$('manageStatus').value,supervisor_name:$('manageSupervisorName').value.trim(),caregiver_name:$('manageCaregiverName').value.trim(),focus:focusFromText($('manageFocus').value),note:$('manageNote').value.trim()};
    const btn=$('saveCaseBtn');btn.disabled=true;
    try{
      if(state.editing){
@@ -431,7 +431,7 @@
    state.editing=id;
    $('manageCaseId').value=c.id;$('manageCaseId').readOnly=true;
    $('manageCaseName').value=c.name;$('manageArea').value=c.area;
-   $('manageService').value=c.service;$('manageFocus').value=focusToText(c.focus);
+   $('manageService').value=c.service;$('manageStatus').value=c.status||'服務中';$('manageSupervisorName').value=c.supervisor_name||'';$('manageCaregiverName').value=c.caregiver_name||'';$('manageFocus').value=focusToText(c.focus);
    $('manageNote').value=c.note;$('saveCaseBtn').textContent='儲存修改';
    $('caseForm').scrollIntoView({behavior:'smooth',block:'center'});
  }
