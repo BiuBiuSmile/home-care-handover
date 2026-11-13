@@ -136,8 +136,9 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   <h2 id="resetPasswordTitle">管理員重設員工密碼</h2>
   <p class="help">員工：<strong id="resetStaffName"></strong>。重設後，員工可使用新密碼重新登入；請以安全方式個別告知本人。</p>
   <form id="resetPasswordForm" autocomplete="off">
-   <div class="field"><label for="resetPassword">新密碼（至少 10 字元，含英文與數字）</label><input id="resetPassword" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
+   <div class="field"><label for="resetPassword">新密碼（至少 10 字元，含英文與數字，可使用身分證字號格式）</label><input id="resetPassword" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
    <div class="field"><label for="resetPasswordConfirm">再次確認新密碼</label><input id="resetPasswordConfirm" type="password" minlength="10" maxlength="72" required autocomplete="new-password"></div>
+   <p class="help">安全提醒：身分證字號容易被知悉，不建議長期使用。請勿將身分證字號或密碼發送到公開群組、貼文或截圖中。</p>
    <label class="help"><input id="showResetPassword" type="checkbox" style="width:18px;min-height:18px;vertical-align:middle"> 暫時顯示密碼</label>
    <footer><button class="btn alt" type="button" id="cancelResetPassword">取消</button><button class="btn" type="submit" id="submitResetPassword">確認重設密碼</button></footer>
   </form>
