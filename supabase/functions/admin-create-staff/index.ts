@@ -51,18 +51,13 @@ Deno.serve(async (req: Request) => {
       : /^8869\d{8}$/.test(phoneInput)
       ? "+" + phoneInput
       : "";
-    const firstPassword = String(body.first_password || "").trim().toUpperCase();
+    // Temporary password uses cryptographically strong randomness; the national ID is not collected.
+    const randomBytes = crypto.getRandomValues(new Uint8Array(18));
+    const firstPassword = btoa(String.fromCharCode(...randomBytes)).replace(/\+/g, "A").replace(/\//g, "b");
     const role = String(body.role || "staff");
     if (!display_name || display_name.length > 80) return respond(400, "請輸入有效員工姓名");
     if (!phone) return respond(400, "請輸入有效的台灣手機門號");
     if (!["staff", "supervisor"].includes(role)) return respond(400, "請選擇居服員或居督");
-    // National ID is accepted only as an initial one-time password, not stored as a separate column.
-    if (!/^[A-Z][12]\d{8}$/.test(firstPassword)) {
-      return respond(400, "初始密碼請使用符合格式的身分證字號");
-    }
-
-    // Phone verification is asserted by the supervising manager. Real phone ownership
-    // is NOT proven by this action. Never use ID-based passwords long-term.
     const { data: created, error: createError } = await db.auth.admin.createUser({
       phone,
       phone_confirm: true,
@@ -84,9 +79,10 @@ Deno.serve(async (req: Request) => {
       // Fail closed: user remains inactive / with initial password change required.
       return respond(500, "登入帳號已建立，但人員權限尚未設定。請通知系統管理員檢查資料庫");
     }
-    return respond(201, "帳號建立成功；員工首次登入必須設定新密碼", {
+    return respond(201, "帳號已建立；請妥善轉交一次性密碼，員工首次登入需更改", {
       user_id: created.user.id,
       phone_last4: phone.slice(-4),
+      initial_password: firstPassword,
     });
   } catch {
     return respond(500, "建立帳號時發生錯誤，請檢查輸入與伺服器設定");
