@@ -6,7 +6,7 @@
 (function(){
  const $ = id => document.getElementById(id);
  const config = window.CARE_CONFIG || {};
- const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',resetTarget:null,deleteTarget:null};
+ const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',resetTarget:null,deleteTarget:null,caseOpen:false,casePage:1,caseFilter:'all',caseSort:'attention',caseView:'cards',browserScroll:0};
  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
  const roles = {admin:'管理員',supervisor:'居督',staff:'居服員'};
  const when = v => v ? new Date(v).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}) : '';
@@ -60,11 +60,17 @@
    $('adminTab').addEventListener('click',async()=>{chooseTab('admin');try{await loadAdmin()}catch(e){notify(errText(e),true)}});
    $('reloadAdmin').addEventListener('click',async()=>{try{await loadAdmin();notify('已更新管理資料')}catch(e){notify(errText(e),true)}});
    $('refreshBtn').addEventListener('click',()=>refreshDashboard());
-   $('caseSearch').addEventListener('input',renderCaseList);
+   $('caseSearch').addEventListener('input',()=>{state.casePage=1;renderCaseList()});
+   $('caseFilter').addEventListener('change',value=>{state.caseFilter=$('caseFilter').value;state.casePage=1;renderCaseList()});
+   $('caseSort').addEventListener('change',()=>{state.caseSort=$('caseSort').value;state.casePage=1;renderCaseList()});
+   $('caseCardView').addEventListener('click',()=>setCaseView('cards'));
+   $('caseRowView').addEventListener('click',()=>setCaseView('rows'));
+   $('casePrev').addEventListener('click',()=>{if(state.casePage>1){state.casePage--;renderCaseList();scrollBrowserTop()}});
+   $('caseNext').addEventListener('click',()=>{state.casePage++;renderCaseList();scrollBrowserTop()});
+   $('backToCases').addEventListener('click',showCaseBrowser);
    $('caseList').addEventListener('click', e=>{
      const b=e.target.closest('[data-case]');if(!b)return;
-     state.current=b.dataset.case;renderCaseList();renderDetail();
-     if(matchMedia('(max-width:780px)').matches)$('caseDetail').scrollIntoView({behavior:'smooth',block:'start'});
+     showCaseDetail(b.dataset.case);
    });
    $('caseForm').addEventListener('submit',saveCase);
    $('clearCaseBtn').addEventListener('click',clearCaseForm);
@@ -317,7 +323,7 @@
      state.records=await checkQuery(r,'讀取交班');
      state.reads=await checkQuery(reads,'取得已讀狀態');
      if(!state.cases.some(x=>x.id===state.current))state.current=state.cases[0]?.id||null;
-     renderCaseList();renderDetail();
+     renderCaseList();if(state.caseOpen)renderDetail();
      if(message)notify('資料已更新');
    }catch(e){notify(errText(e),true)}
  }
@@ -327,10 +333,95 @@
    const seen=state.reads.find(x=>x.case_id===c.id);
    return !seen||new Date(seen.read_at)<new Date(r.created_at);
  }
+ function setCaseView(view){
+   state.caseView=view;
+   state.casePage=1;
+   $('caseCardView').classList.toggle('active',view==='cards');
+   $('caseRowView').classList.toggle('active',view==='rows');
+   $('caseCardView').setAttribute('aria-pressed',String(view==='cards'));
+   $('caseRowView').setAttribute('aria-pressed',String(view==='rows'));
+   renderCaseList();
+ }
+ function scrollBrowserTop(){
+   const top=$('caseBrowser').getBoundingClientRect().top+window.scrollY-12;
+   window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
+ }
+ function showCaseBrowser(){
+   state.caseOpen=false;
+   $('caseBrowser').hidden=false;
+   $('caseFocus').hidden=true;
+   renderCaseList();
+   window.requestAnimationFrame(()=>window.scrollTo(0,state.browserScroll||0));
+ }
+ function showCaseDetail(id){
+   const found=state.cases.find(c=>c.id===id);
+   if(!found)return notify('找不到此個案，請重新整理資料',true);
+   state.browserScroll=window.scrollY;
+   state.current=id;
+   state.caseOpen=true;
+   $('caseFocusPath').textContent='個案總覽 / '+found.name;
+   $('caseBrowser').hidden=true;
+   $('caseFocus').hidden=false;
+   renderDetail();
+   window.scrollTo({top:0,behavior:'smooth'});
+ }
  function renderCaseList(){
-   const term=$('caseSearch').value.trim().toLowerCase();
-   const cases=state.cases.filter(x=>(x.id+x.name+x.area+(x.status||'')+(x.supervisor_name||'')+(x.caregiver_name||'')).toLowerCase().includes(term));
-   $('caseList').innerHTML=cases.map(c=>'<button type="button" class="case-button '+(state.current===c.id?'active':'')+'" data-case="'+esc(c.id)+'"><strong>'+esc(c.name)+(c.status && c.status!=='服務中'?'<span class="pill">'+esc(c.status)+'</span>':'')+(isUnread(c)?'<span class="pill">待閱</span>':'')+'</strong><small>'+esc(c.id)+'｜'+esc(c.area)+' · '+esc(c.service)+'</small></button>').join('')||'<p class="muted">沒有符合條件的個案。管理員可先建立個案，並指派服務人員。</p>';
+   const text=$('caseSearch').value.trim().toLocaleLowerCase('zh-TW');
+   const tokens=text.split(/\s+/).filter(Boolean);
+   const filtered=state.cases.filter(c=>{
+     const haystack=[c.id,c.name,c.area,c.service,c.status,c.supervisor_name,c.caregiver_name].filter(Boolean).join(' ').toLocaleLowerCase('zh-TW');
+     if(!tokens.every(token=>haystack.includes(token)))return false;
+     if(state.caseFilter==='unread')return isUnread(c);
+     if(state.caseFilter==='recorded')return recordsFor(c.id).length>0;
+     if(state.caseFilter==='paused')return c.status==='暫停';
+     return true;
+   });
+   const lastTime=c=>recordsFor(c.id)[0]?.created_at || '';
+   const order=state.caseSort;
+   filtered.sort((a,b)=>{
+     if(order==='attention'){
+       const diff=Number(isUnread(b))-Number(isUnread(a));
+       if(diff!==0)return diff;
+       const recent=lastTime(b).localeCompare(lastTime(a));
+       if(recent!==0)return recent;
+     }else if(order==='recent'){
+       const recent=lastTime(b).localeCompare(lastTime(a));
+       if(recent!==0)return recent;
+     }else if(order==='number'){
+       return String(a.id).localeCompare(String(b.id),'zh-Hant',{numeric:true});
+     }else if(order==='area'){
+       const compare=String(a.area||'').localeCompare(String(b.area||''),'zh-Hant');
+       if(compare!==0)return compare;
+     }
+     return String(a.name||'').localeCompare(String(b.name||''),'zh-Hant');
+   });
+   const total=filtered.length;
+   const size=state.caseView==='rows'?20:12;
+   const pages=Math.max(1,Math.ceil(total/size));
+   state.casePage=Math.max(1,Math.min(state.casePage,pages));
+   const start=(state.casePage-1)*size;
+   const shown=filtered.slice(start,start+size);
+   $('statCaseCount').textContent=String(state.cases.length);
+   $('statUnreadCount').textContent=String(state.cases.filter(isUnread).length);
+   $('statRecordedCount').textContent=String(state.cases.filter(c=>recordsFor(c.id).length>0).length);
+   $('caseListSummary').textContent=total===0?'目前沒有符合條件的個案':'符合 '+total+' 位個案 · 顯示 '+(start+1)+'–'+(start+shown.length)+' 位';
+   $('caseList').classList.toggle('row-mode',state.caseView==='rows');
+   $('caseList').innerHTML=shown.map(c=>{
+     const count=recordsFor(c.id).length;
+     const latest=lastTime(c);
+     const status=c.status&&c.status!=='服務中'?'<span class="tile-tag paused">'+esc(c.status)+'</span>':'';
+     const unread=isUnread(c)?'<span class="tile-tag unread">● 待閱</span>':'';
+     return '<button type="button" class="case-tile" data-case="'+esc(c.id)+'" aria-label="查看 '+esc(c.name)+' 的交班紀錄">'+
+        '<div class="tile-top"><div><div class="tile-name">'+esc(c.name)+'</div><div class="tile-code">'+esc(c.id)+' · '+esc(c.area||'未設定區域')+'</div></div><div class="tile-tags">'+unread+status+'</div></div>'+
+        '<div class="tile-subtitle">'+esc(c.service||'尚未設定服務項目')+'</div>'+
+        '<div class="tile-meta">交班紀錄 '+count+' 筆'+(latest?' · 最近：'+esc(when(latest).slice(0,10)):' · 尚無交班')+'</div>'+
+        '<div class="tile-bottom"><span>主責居服員：'+esc(c.caregiver_name||'未設定')+'</span><span class="tile-open">查看交班 ›</span></div>'+
+      '</button>';
+   }).join('')||'<div class="empty-cases">'+(state.cases.length?'沒有符合條件的個案，請調整搜尋或篩選。':'尚無可查看的個案，請由管理員建立並指派個案。')+'</div>';
+   $('casePagination').hidden=pages<=1;
+   $('casePrev').disabled=state.casePage<=1;
+   $('caseNext').disabled=state.casePage>=pages;
+   $('casePageLabel').textContent='第 '+state.casePage+' / '+pages+' 頁';
  }
  function renderDetail(){
    const c=selectedCase(),root=$('caseDetail');
