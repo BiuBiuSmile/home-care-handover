@@ -43,24 +43,31 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <section class="auth-shell" id="authScreen">
  <div class="auth-card">
   <div class="brand"><span class="logo">護</span> 安護交班</div>
-  <h1 id="authTitle">手機驗證登入</h1>
-  <p class="help">只要輸入手機號碼，即可接收一次性簡訊驗證碼，無需電子信箱或密碼。首次驗證後仍須管理員核准。</p>
-  <div id="configMessage" class="msg error" hidden>尚未設定 Supabase。管理員須先建立資料庫並填寫 config.js，才能啟用正式登入。<a href="demo.html">可先查看示範版</a>。</div>
+  <h1>員工帳號登入</h1>
+  <p class="help">由管理員建立帳號。員工只需使用手機號碼和個人密碼登入，不需要自行申請或收簡訊。</p>
+  <div id="configMessage" class="msg error" hidden>Supabase 連線尚未設定，請通知系統管理員。</div>
   <form id="authForm">
-   <div class="field"><label for="phone">手機門號（台灣）</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="例如 0912345678" maxlength="20" required></div>
-   <div class="auth-actions"><button class="btn" style="width:100%" type="submit" id="authSubmit">傳送簡訊驗證碼</button></div>
+   <div class="field"><label for="phone">手機門號（帳號）</label><input id="phone" type="tel" inputmode="tel" autocomplete="username" placeholder="例如 0912345678" maxlength="20" required></div>
+   <div class="field"><label for="password">密碼</label><input id="password" type="password" autocomplete="current-password" minlength="8" required></div>
+   <button class="btn" type="submit" style="width:100%;margin-top:12px" id="authSubmit">登入</button>
   </form>
-  <form id="verifyForm" hidden>
-  <h2 style="font-size:21px;margin:18px 0 5px">驗證手機門號</h2>
-  <p class="help" id="verifyHint">請輸入收到的簡訊驗證碼。首次使用需待管理員核准。</p>
-  <div class="field"><label for="smsCode">簡訊驗證碼</label><input id="smsCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]{4,8}" placeholder="輸入簡訊中的數字" required></div>
-  <div class="auth-actions"><button class="btn" type="submit" id="verifySubmit">驗證門號</button><button class="btn alt" type="button" id="verifyBack">返回登入</button></div>
-  <button class="btn alt" type="button" id="resendSms" style="margin-top:12px;width:100%">重新發送驗證碼</button>
-  <p class="help">驗證碼有時效，重新發送須遵守簡訊服務的發送限制。請勿將驗證碼告訴其他人。</p>
- </form>
- <div id="authMessage" role="status" aria-live="polite"></div>
-  <p class="help">每次重新登入使用簡訊驗證碼，不須設定或輸入密碼；首次加入需經管理員審核，才能讀取指派個案。</p>
-  <p><a href="demo.html">返回不含真實資料的互動示範版</a></p>
+  <div id="authMessage" role="status" aria-live="polite"></div>
+  <p class="help">帳號需由管理員建檔。初始密碼僅供首次登入，系統會要求立即更改；請勿使用身分證字號作為長期密碼。</p>
+  <p><a href="demo.html">開啟不含真實資料的互動示範版</a></p>
+ </div>
+</section>
+<section class="auth-shell" id="changeScreen" hidden>
+ <div class="auth-card">
+  <div class="brand"><span class="logo">護</span> 安護交班</div>
+  <h1>首次登入｜設定個人密碼</h1>
+  <p class="help">為保障個案紀錄安全，初始密碼只能用於登入並建立自己的密碼。設定完成前無法閱讀或新增交班紀錄。</p>
+  <form id="changePasswordForm">
+   <div class="field"><label for="newPassword">新密碼（至少 12 字元）</label><input id="newPassword" type="password" autocomplete="new-password" minlength="12" required placeholder="請設定自己記得住且不容易猜到的密碼"></div>
+   <div class="field"><label for="confirmPassword">再次輸入新密碼</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required></div>
+   <button class="btn" id="changePasswordBtn" type="submit" style="width:100%;margin-top:12px">設定密碼並繼續</button>
+  </form>
+  <div id="changeMessage" role="status" aria-live="polite"></div>
+  <button type="button" class="btn alt" id="changeLogout" style="width:100%;margin-top:12px">登出</button>
  </div>
 </section>
 <section class="auth-shell" id="pendingScreen" hidden><div class="auth-card"><div class="brand"><span class="logo">護</span> 安護交班</div><h1 id="pendingTitle">帳號待審核</h1><p class="help" id="pendingMessage">已成功驗證身分，但尚未取得使用權限。請通知管理員啟用帳號並指派個案。</p><div class="auth-actions"><button class="btn alt" type="button" id="pendingReload">重新檢查</button><button class="btn warn" type="button" id="pendingLogout">登出</button></div></div></section>
@@ -80,6 +87,26 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   </section>
   <section id="adminPage" hidden>
    <div class="stack">
+    <section class="panel">
+     <h2>建立員工帳號</h2>
+     <p class="help">由最高權限管理員建立帳號，員工不能自行註冊。系統會產生一組一次性初始密碼，僅在建立成功當下顯示，請私下交給本人。員工第一次登入必須更改密碼；不蒐集身分證字號作為密碼。</p>
+     <form id="provisionForm">
+      <div class="split">
+       <div class="field"><label for="staffName">員工姓名</label><input id="staffName" maxlength="80" required autocomplete="off"></div>
+       <div class="field"><label for="staffPhone">手機門號（登入帳號）</label><input id="staffPhone" type="tel" inputmode="tel" maxlength="20" placeholder="09xxxxxxxx" required autocomplete="off"></div>
+       <div class="field"><label for="staffRole">員工角色</label><select id="staffRole"><option value="staff">居服員</option><option value="supervisor">居督</option></select></div>
+      </div>
+      <button type="submit" id="createStaffBtn" class="btn">建立員工帳號</button>
+     </form>
+     <div id="issuedCredentials" class="msg" hidden role="status">
+       <strong>帳號建立成功｜請僅私下交付當事人</strong>
+       <p class="help">初始密碼只顯示這一次；請勿拍照公開或張貼群組。</p>
+       <div class="field"><label>員工手機帳號</label><input id="issuedPhone" readonly></div>
+       <div class="field"><label>一次性初始密碼</label><input id="issuedPassword" readonly></div>
+       <button type="button" class="btn alt" id="copyIssued">複製初始密碼</button>
+       <button type="button" class="btn alt" id="clearIssued">關閉並清除顯示</button>
+     </div>
+    </section>
     <section class="panel"><div class="toolbar"><h2>帳號與權限管理</h2><button class="btn alt" type="button" id="reloadAdmin">重新整理</button></div><p class="help">只有管理員可啟用帳號、調整角色。新使用者預設未啟用，請確認身分後再開通。</p><div class="scroll-table"><table><thead><tr><th>使用者</th><th>角色</th><th>啟用</th><th>操作</th></tr></thead><tbody id="usersBody"></tbody></table></div></section>
     <section class="panel"><h2>新增／編輯個案</h2><p class="help">為保護個資，請先使用虛構測試個案；正式上線須完成資安與適法性確認。</p><form id="caseForm"><div class="split"><div class="field"><label for="manageCaseId">個案代碼（新增後不可改）</label><input id="manageCaseId" required maxlength="40" placeholder="例如 HC-100"></div><div class="field"><label for="manageCaseName">個案顯示名稱</label><input id="manageCaseName" required maxlength="100"></div><div class="field"><label for="manageArea">服務區域</label><input id="manageArea" maxlength="100"></div><div class="field"><label for="manageService">服務項目</label><input id="manageService" maxlength="150"></div></div><div class="field"><label for="manageFocus">固定照顧重點（每行：標題 | 內容）</label><textarea id="manageFocus" maxlength="3000" placeholder="移位安全 | 先確認煞車固定&#10;備餐習慣 | 需先確認飲食禁忌"></textarea></div><div class="field"><label for="manageNote">重要提醒</label><textarea id="manageNote" maxlength="1000"></textarea></div><div class="action-inline"><button class="btn" type="submit" id="saveCaseBtn">新增個案</button><button class="btn alt" type="button" id="clearCaseBtn">清除欄位</button></div></form></section>
     <section class="panel"><h2>個案服務人員指派</h2><p class="help">居服員與督導必須被指派到個案，才能看到交班紀錄。取消指派後，資料庫會立即拒絕讀取。</p><form id="assignForm"><div class="split"><div class="field"><label for="assignCase">選擇個案</label><select id="assignCase" required></select></div><div class="field"><label for="assignUser">選擇已啟用人員</label><select id="assignUser" required></select></div></div><button class="btn" type="submit">指派人員</button></form><div id="assignedList" class="scroll-table"></div></section>
