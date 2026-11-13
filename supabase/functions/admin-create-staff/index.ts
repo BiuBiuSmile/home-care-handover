@@ -130,6 +130,51 @@ Deno.serve(async (req: Request) => {
       return reply(200, "已重設員工密碼。請安全告知本人，原密碼將不能再用來重新登入");
     }
 
+    if (action === "delete_user") {
+      const id = String(payload.user_id ?? "");
+      const confirmWord = String(payload.confirm ?? "");
+      if (confirmWord !== "刪除") return reply(400, "請輸入「刪除」以確認");
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+        return reply(400, "員工識別碼格式不正確");
+      if (id === signedIn.user.id) return reply(403, "不能刪除自己的管理員帳號");
+
+      // Server-side authorization, regardless of what the browser shows.
+      const { data: target, error: targetError } = await db.from("profiles")
+        .select("id,display_name,role")
+        .eq("id", id).maybeSingle();
+      if (targetError || !target) return reply(404, "找不到此使用者帳號");
+      if (target.role !== "staff" && target.role !== "supervisor")
+        return reply(403, "為避免管理權限遺失，此功能不能刪除管理員帳號");
+
+      // Audit must be created before the destructive action.
+      const { data: event, error: eventError } = await db.from("admin_account_events")
+        .insert({
+          actor_id: signedIn.user.id,
+          target_id: id,
+          target_display_name: target.display_name,
+          target_role: target.role,
+          action: "delete_user",
+          status: "initiated"
+        }).select("id").single();
+      if (eventError || !event) return reply(500, "無法建立操作稽核紀錄，帳號尚未刪除");
+
+      // Auth removes profiles and assignments by CASCADE. Handovers.author_id
+      // is SET NULL; handovers.author_name and its historical content remain.
+      const { error: deleteError } = await db.auth.admin.deleteUser(id);
+      if (deleteError) {
+        await db.from("admin_account_events").update({
+          status: "failed", finished_at: new Date().toISOString()
+        }).eq("id", event.id);
+        return reply(409, "刪除失敗，帳號未移除；請檢查資料關聯或帳號狀態");
+      }
+
+      const { error: auditError } = await db.from("admin_account_events")
+        .update({ status: "completed", finished_at: new Date().toISOString() })
+        .eq("id", event.id);
+      if (auditError) return reply(200, "使用者帳號已刪除，但稽核完成狀態需由管理員複核");
+      return reply(200, "已刪除員工帳號及指派權限，歷史交班紀錄保留");
+    }
+
     return reply(400, "不支援的操作");
   } catch {
     // Do not expose raw errors that might include credentials.
