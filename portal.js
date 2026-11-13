@@ -59,6 +59,8 @@
    $('casesTab').addEventListener('click',()=>chooseTab('cases'));
    $('adminTab').addEventListener('click',async()=>{chooseTab('admin');try{await loadAdmin()}catch(e){notify(errText(e),true)}});
    $('reloadAdmin').addEventListener('click',async()=>{try{await loadAdmin();notify('已更新管理資料')}catch(e){notify(errText(e),true)}});
+   $('adminUserSearch').addEventListener('input',renderUsers);
+   $('adminUserRoleFilter').addEventListener('change',renderUsers);
    $('refreshBtn').addEventListener('click',()=>refreshDashboard());
    $('caseSearch').addEventListener('input',()=>{state.casePage=1;renderCaseList()});
    $('caseFilter').addEventListener('change',value=>{state.caseFilter=$('caseFilter').value;state.casePage=1;renderCaseList()});
@@ -76,6 +78,10 @@
    $('clearCaseBtn').addEventListener('click',clearCaseForm);
    $('assignForm').addEventListener('submit',saveAssignment);
    $('assignCase').addEventListener('change',renderAssignedList);
+   $('usersBody').addEventListener('change',e=>{
+     const checkbox=e.target.closest('input[data-active]');
+     if(checkbox){const label=checkbox.closest('.staff-state')?.querySelector('span');if(label)label.textContent=checkbox.checked?'已啟用':'已停用'}
+   });
    $('usersBody').addEventListener('click',e=>{
      const b=e.target.closest('[data-reset-profile]');
      if(b){openResetPassword(b.dataset.resetProfile);return}
@@ -477,10 +483,21 @@
    state.profiles=await checkQuery(p,'取得帳號清單');
    state.assignments=await checkQuery(a,'取得指派清單');
    await refreshDashboard(false);
+   $('adminTotalUsers').textContent=String(state.profiles.length);
+   $('adminActiveUsers').textContent=String(state.profiles.filter(p=>p.active).length);
+   $('adminTotalCases').textContent=String(state.cases.length);
    renderUsers();renderAssignControls();
  }
  function renderUsers(){
-   $('usersBody').innerHTML=state.profiles.map(p=>{
+   const query=$('adminUserSearch').value.trim().toLocaleLowerCase('zh-TW');
+   const roleFilter=$('adminUserRoleFilter').value;
+   const shown=state.profiles.filter(p=>{
+     const matchName=String(p.display_name||'').toLocaleLowerCase('zh-TW').includes(query);
+     const matchRole=roleFilter==='all'||p.role===roleFilter;
+     return matchName&&matchRole;
+   });
+   $('adminUserSummary').textContent='顯示 '+shown.length+' / '+state.profiles.length+' 位';
+   $('usersBody').innerHTML=shown.map(p=>{
      const self=p.id===state.user.id;
      const manageable=!self && (p.role==='staff'||p.role==='supervisor');
      const options=Object.keys(roles).map(role=>'<option value="'+role+'" '+(p.role===role?'selected':'')+'>'+roles[role]+'</option>').join('');
@@ -488,8 +505,15 @@
        ? '<button type="button" class="btn alt" data-reset-profile="'+esc(p.id)+'">重設密碼</button>' : '';
      const remove=manageable
        ? '<button type="button" class="btn warn" data-delete-profile="'+esc(p.id)+'">刪除使用者</button>' : '';
-     return '<tr><td><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><small class="muted">'+esc(p.id.slice(0,8))+'…</small>'+(self?' <span class="pill ok">自己</span>':'')+'</td><td><select data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td><td><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'></td><td><div class="action-inline"><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button>'+reset+remove+'</div></td></tr>';
-   }).join('')||'<tr><td colspan="4">尚無帳號</td></tr>';
+     const avatar=String(p.display_name||'?').trim().slice(0,1)||'?';
+     const meta=self?'<span class="pill ok staff-self">自己</span>':'<span class="staff-role-small">'+esc(roles[p.role]||p.role)+'</span>';
+     return '<tr class="staff-row">'+
+       '<td data-label="使用者"><div class="staff-person"><span class="staff-avatar" aria-hidden="true">'+esc(avatar)+'</span><div class="staff-person-copy"><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><div class="staff-subline">'+meta+'<span>'+esc(p.id.slice(0,8))+'…</span></div></div></div></td>'+
+       '<td data-label="帳號角色" class="staff-role-col"><select aria-label="'+esc(p.display_name)+'的角色" data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td>'+
+       '<td data-label="使用狀態"><label class="staff-state"><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'><span>'+(p.active?'已啟用':'已停用')+'</span></label></td>'+
+       '<td data-label="管理操作"><div class="staff-actions"><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button>'+reset+remove+'</div></td>'+
+       '</tr>';
+   }).join('')||'<tr><td colspan="4" class="staff-empty">目前沒有符合條件的使用者，請調整搜尋或角色篩選。</td></tr>';
  }
  async function saveProfileFromRow(e){
    const b=e.target.closest('[data-save-profile]');if(!b)return;
@@ -525,7 +549,12 @@
      clearCaseForm();await loadAdmin();notify('個案已儲存');
    }catch(error){notify(errText(error),true)}finally{btn.disabled=false}
  }
- function clearCaseForm(){state.editing=null;$('caseForm').reset();$('manageCaseId').readOnly=false;$('saveCaseBtn').textContent='新增個案'}
+ function clearCaseForm(){
+   state.editing=null;$('caseForm').reset();$('manageCaseId').readOnly=false;
+   $('saveCaseBtn').textContent='＋ 新增個案';
+   $('caseEditMode').textContent='新增模式';$('caseEditMode').classList.remove('editing');
+   $('caseFormHelp').textContent='填寫完畢後儲存個案資料';
+ }
  function editCase(id){
    const c=state.cases.find(x=>x.id===id);if(!c)return;
    state.editing=id;
@@ -533,7 +562,9 @@
    $('manageCaseName').value=c.name;$('manageArea').value=c.area;
    $('manageService').value=c.service;$('manageStatus').value=c.status||'服務中';$('manageSupervisorName').value=c.supervisor_name||'';$('manageCaregiverName').value=c.caregiver_name||'';$('manageFocus').value=focusToText(c.focus);
    $('manageNote').value=c.note;$('saveCaseBtn').textContent='儲存修改';
-   $('caseForm').scrollIntoView({behavior:'smooth',block:'center'});
+   $('caseEditMode').textContent='編輯模式 · '+c.name;$('caseEditMode').classList.add('editing');
+   $('caseFormHelp').textContent='正在編輯 '+c.name+'，儲存後將更新原有個案資料';
+   $('adminCasesSection').scrollIntoView({behavior:'smooth',block:'start'});
  }
  function renderAssignControls(){
    const current=$('assignCase').value;
