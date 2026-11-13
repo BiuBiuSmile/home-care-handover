@@ -6,7 +6,7 @@
 (function(){
  const $ = id => document.getElementById(id);
  const config = window.CARE_CONFIG || {};
- const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases'};
+ const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',resetTarget:null};
  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
  const roles = {admin:'管理員',supervisor:'居督',staff:'居服員'};
  const when = v => v ? new Date(v).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}) : '';
@@ -36,8 +36,17 @@
    $('changePasswordForm').addEventListener('submit',changeFirstPassword);
    $('changeLogout').addEventListener('click',logout);
    $('provisionForm').addEventListener('submit',createStaffAccount);
-   $('copyIssued').addEventListener('click',()=>{const v=$('issuedPassword').value;if(v)navigator.clipboard?.writeText(v).then(()=>notify('已複製初始密碼，請私下安全交付本人')).catch(()=>notify('複製失敗，請手動選取複製',true))});
-   $('clearIssued').addEventListener('click',clearIssuedCredentials);
+   $('showStaffPassword').addEventListener('change',v=>{
+     const type=$('showStaffPassword').checked?'text':'password';
+     $('staffPassword').type=type;$('staffPasswordConfirm').type=type;
+   });
+   $('resetPasswordForm').addEventListener('submit',submitResetPassword);
+   $('cancelResetPassword').addEventListener('click',closeResetPassword);
+   $('showResetPassword').addEventListener('change',()=>{
+     const type=$('showResetPassword').checked?'text':'password';
+     $('resetPassword').type=type;$('resetPasswordConfirm').type=type;
+   });
+   $('resetPasswordLayer').addEventListener('click',e=>{if(e.target===$('resetPasswordLayer'))closeResetPassword();});
    $('pendingReload').addEventListener('click',refreshIdentity);
    $('pendingLogout').addEventListener('click',logout);
    $('logoutBtn').addEventListener('click',logout);
@@ -55,12 +64,16 @@
    $('clearCaseBtn').addEventListener('click',clearCaseForm);
    $('assignForm').addEventListener('submit',saveAssignment);
    $('assignCase').addEventListener('change',renderAssignedList);
-   $('usersBody').addEventListener('click',saveProfileFromRow);
+   $('usersBody').addEventListener('click',e=>{
+     const b=e.target.closest('[data-reset-profile]');
+     if(b){openResetPassword(b.dataset.resetProfile);return}
+     saveProfileFromRow(e);
+   });
    $('assignedList').addEventListener('click',removeAssignment);
    $('handoverForm').addEventListener('submit',saveHandover);
    $('cancelRecord').addEventListener('click',closeHandover);
    $('handoverLayer').addEventListener('click',e=>{if(e.target===$('handoverLayer'))closeHandover()});
-   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHandover()});
+   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHandover();closeResetPassword()}});
    if(!config.SUPABASE_URL || !config.SUPABASE_ANON_KEY || config.SUPABASE_URL.includes('YOUR_') || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.SUPABASE_URL) || !window.supabase?.createClient){
      $('configMessage').hidden=false;
      $('authSubmit').disabled=true;
@@ -115,10 +128,25 @@
    }catch(error){fail(errText(error))}
    finally{setBusy(form,false)}
  }
- function clearIssuedCredentials(){
-   $('issuedCredentials').hidden=true;
-   $('issuedPhone').value='';
-   $('issuedPassword').value='';
+ function validateManagerPassword(password,phone){
+   if(password.length<10||password.length>72)return '密碼須為 10～72 字元';
+   if(!/[A-Za-z]/.test(password)||!/[0-9]/.test(password))return '密碼須包含英文字母與數字';
+   if(/^[A-Za-z][12]\d{8}$/.test(password))return '請勿使用身分證字號當密碼';
+   if(phone && (password.includes(phone.slice(-9))||password.includes('0'+phone.slice(-9))))return '密碼不能包含員工手機號碼';
+   return '';
+ }
+ async function invokeAdminUser(body){
+   const {data,error}=await state.db.functions.invoke('admin-create-staff',{body});
+   if(error){
+     let message='伺服器操作失敗，請確認管理員權限與密碼規則';
+     try{
+       const detail=await error.context?.json();
+       if(typeof detail?.message==='string')message=detail.message;
+     }catch{}
+     throw Error(message);
+   }
+   if(!data || typeof data.message!=='string')throw Error('後端未回傳完整結果');
+   return data;
  }
  async function createStaffAccount(e){
    e.preventDefault();if(!canAdmin())return;
@@ -126,20 +154,63 @@
    let phone;
    try{phone=phoneE164($('staffPhone').value)}catch(error){notify(errText(error),true);return}
    const role=$('staffRole').value;
-   if(!display_name || !['staff','supervisor'].includes(role))return notify('請完整填寫員工姓名及角色',true);
-   clearIssuedCredentials();setBusy(form,true);
+   const password=$('staffPassword').value;
+   const confirm=$('staffPasswordConfirm').value;
+   if(!display_name||!['staff','supervisor'].includes(role))return notify('請完整填寫姓名、手機與角色',true);
+   const issue=validateManagerPassword(password,phone);
+   if(issue)return notify(issue,true);
+   if(password!==confirm)return notify('兩次輸入的密碼不一致',true);
+   $('createdStaffSuccess').hidden=true;
+   setBusy(form,true);
    try{
-     const {data,error}=await state.db.functions.invoke('admin-create-staff',{body:{display_name,phone,role}});
-     if(error)throw Error('建立帳號失敗，請檢查 Edge Function 與管理員登入狀態');
-     if(!data?.initial_password)throw Error(data?.message || '帳號尚未成功建立');
-     $('issuedPhone').value=phone;
-     $('issuedPassword').value=data.initial_password;
-     $('issuedCredentials').hidden=false;
-     form.reset();
+     const result=await invokeAdminUser({action:'create',display_name,phone,role,password});
+     if(!result.user_id)throw Error('伺服器未確認帳號已建立');
+     form.reset();$('staffPassword').type='password';$('staffPasswordConfirm').type='password';
+     $('createdStaffSuccess').hidden=false;
      await loadAdmin();
-     notify('員工帳號建立成功，請安全交付初始密碼');
+     notify('帳號建立成功，員工可直接使用管理員設定的密碼登入');
    }catch(error){notify(errText(error),true)}
-   finally{setBusy(form,false)}
+   finally{
+     $('staffPassword').value='';$('staffPasswordConfirm').value='';
+     setBusy(form,false);
+   }
+ }
+ function openResetPassword(id){
+   if(!canAdmin())return;
+   const p=state.profiles.find(x=>x.id===id);
+   if(!p || !['staff','supervisor'].includes(p.role))return notify('只有居服員或居督的密碼可以在此重設',true);
+   state.resetTarget=id;
+   $('resetStaffName').textContent=p.display_name;
+   $('resetPasswordForm').reset();
+   $('resetPassword').type='password';$('resetPasswordConfirm').type='password';
+   $('resetPasswordLayer').hidden=false;
+   $('resetPassword').focus();
+ }
+ function closeResetPassword(){
+   state.resetTarget=null;
+   $('resetPasswordForm').reset();
+   $('resetPassword').type='password';$('resetPasswordConfirm').type='password';
+   $('resetPasswordLayer').hidden=true;
+ }
+ async function submitResetPassword(e){
+   e.preventDefault();if(!canAdmin()||!state.resetTarget)return;
+   const target=state.profiles.find(x=>x.id===state.resetTarget);
+   if(!target||!['staff','supervisor'].includes(target.role))return notify('無法重設這個帳號',true);
+   const password=$('resetPassword').value,confirm=$('resetPasswordConfirm').value;
+   const issue=validateManagerPassword(password);
+   if(issue)return notify(issue,true);
+   if(password!==confirm)return notify('兩次輸入的密碼不一致',true);
+   const form=$('resetPasswordForm'),user_id=state.resetTarget;
+   setBusy(form,true);
+   try{
+     await invokeAdminUser({action:'reset_password',user_id,password});
+     closeResetPassword();
+     notify('密碼已更新，請私下告知員工。舊密碼無法再用於重新登入');
+   }catch(error){notify(errText(error),true)}
+   finally{
+     $('resetPassword').value='';$('resetPasswordConfirm').value='';
+     setBusy(form,false);
+   }
  }
  async function setSession(session){
    if(!session?.user){state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];show('authScreen');return;}
@@ -175,7 +246,7 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {state.user=null;state.profile=null;clearIssuedCredentials();show('authScreen');notify('已登出')}
+   else {state.user=null;state.profile=null;closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
    if(tab==='admin'&&!canAdmin())return;
@@ -263,7 +334,9 @@
    $('usersBody').innerHTML=state.profiles.map(p=>{
      const self=p.id===state.user.id;
      const options=Object.keys(roles).map(role=>'<option value="'+role+'" '+(p.role===role?'selected':'')+'>'+roles[role]+'</option>').join('');
-     return '<tr><td><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><small class="muted">'+esc(p.id.slice(0,8))+'…</small>'+(self?' <span class="pill ok">自己</span>':'')+'</td><td><select data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td><td><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'></td><td><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button></td></tr>';
+     const reset=(!self && (p.role==='staff'||p.role==='supervisor'))
+       ? '<button type="button" class="btn alt" data-reset-profile="'+esc(p.id)+'">重設密碼</button>' : '';
+     return '<tr><td><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><small class="muted">'+esc(p.id.slice(0,8))+'…</small>'+(self?' <span class="pill ok">自己</span>':'')+'</td><td><select data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td><td><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'></td><td><div class="action-inline"><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button>'+reset+'</div></td></tr>';
    }).join('')||'<tr><td colspan="4">尚無帳號</td></tr>';
  }
  async function saveProfileFromRow(e){
