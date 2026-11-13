@@ -72,7 +72,7 @@
     $('discussionBody').focus();
   }
   function changeTab(next){
-    if(!['guide','discussion','history'].includes(next))return;
+    if(!['guide','discussion','rooms','history'].includes(next))return;
     state.panel=next;
     document.querySelectorAll('[data-care-tab]').forEach(b=>{
       const active=b.dataset.careTab===next;
@@ -81,6 +81,7 @@
     });
     document.querySelectorAll('[data-care-panel]').forEach(p=>p.hidden=p.dataset.carePanel!==next);
     if(next==='discussion' && state.loaded)loadMessages(false);
+    if(next==='rooms' && state.loaded)window.HandoverRooms?.refresh();
   }
   async function loadGuide(){
     const id=state.caseId,seq=state.loadId;
@@ -211,5 +212,5 @@
       }
     },25000);
   }
-  window.CareCollab={mount,destroy};
+  window.CareCollab={mount,destroy,selectTab:changeTab};
 })();
