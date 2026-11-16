@@ -32,6 +32,7 @@
    return result.data;
  }
  async function init(){
+   window.HandoverRooms?.bindInbox();
    $('authForm').addEventListener('submit',handleAuth);
    $('changePasswordForm').addEventListener('submit',changeFirstPassword);
    $('changeLogout').addEventListener('click',logout);
@@ -276,6 +277,7 @@
    if(!session?.user){
      window.CareCollab?.destroy();
      window.HandoverRooms?.destroy();
+     window.HandoverRooms?.clearInbox();
      state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
      state.current=null;state.caseOpen=false;state.casePage=1;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -284,6 +286,7 @@
    if(state.user?.id!==session.user.id){
      window.CareCollab?.destroy();
      window.HandoverRooms?.destroy();
+     window.HandoverRooms?.clearInbox();
      state.cases=[];state.records=[];state.reads=[];state.current=null;
      state.caseOpen=false;state.casePage=1;state.browserScroll=0;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -320,7 +323,7 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
    if(tab==='admin'&&!canAdmin())return;
@@ -335,7 +338,7 @@
      const db=state.db;
      const [c,r,reads]=await Promise.all([
        db.from('cases').select('id,name,area,service,status,supervisor_name,caregiver_name,focus,note,created_at').order('created_at',{ascending:false}),
-       db.from('handovers').select('id,case_id,author_name,kind,risk,summary,description,expires_on,created_at').order('created_at',{ascending:false}).limit(1000),
+       db.from('handovers').select('id,case_id,author_name,kind,risk,summary,description,expires_on,created_at,source_room_id').order('created_at',{ascending:false}).limit(1000),
        db.from('case_reads').select('case_id,read_at').eq('user_id',state.user.id)
      ]);
      state.cases=await checkQuery(c,'讀取個案');
@@ -343,6 +346,8 @@
      state.reads=await checkQuery(reads,'取得已讀狀態');
      if(!state.cases.some(x=>x.id===state.current))state.current=state.cases[0]?.id||null;
      renderCaseList();if(state.caseOpen)renderDetail();
+     if(window.HandoverRooms)window.HandoverRooms.loadInvites({db:state.db,user:state.user,profile:state.profile})
+       .catch(e=>notify('交班邀請更新失敗：'+errText(e),true));
      if(message)notify('資料已更新');
    }catch(e){notify(errText(e),true)}
  }
@@ -369,6 +374,7 @@
    state.caseOpen=false;
    $('caseBrowser').hidden=false;
    $('caseFocus').hidden=true;
+   $('tempInboxWorkspace').hidden=true;
    window.CareCollab?.destroy();
    window.HandoverRooms?.destroy();
    renderCaseList();
@@ -450,7 +456,7 @@
    const rec=recordsFor(c.id);
    const rlist=rec.map(r=>{
      const badge=r.risk==='一般'?'':('<span class="pill '+(r.risk==='緊急'?'critical':'')+'">'+esc(r.risk)+'</span>');
-     return '<article class="record"><div class="record-head"><strong>'+esc(r.summary)+' '+badge+'</strong><small>'+when(r.created_at)+'</small></div><small>'+esc(r.kind)+'｜記錄人：'+esc(r.author_name)+'</small><p>'+esc(r.description)+'</p>'+(r.expires_on?'<small>提醒期限：'+esc(r.expires_on)+'</small>':'')+'</article>';
+     return '<article class="record"><div class="record-head"><strong>'+esc(r.summary)+' '+badge+'</strong><small>'+when(r.created_at)+'</small></div><small>'+esc(r.kind)+(r.source_room_id?'｜48 小時聊天室整理':'')+'｜記錄人：'+esc(r.author_name)+'</small><p>'+esc(r.description)+'</p>'+(r.expires_on?'<small>提醒期限：'+esc(r.expires_on)+'</small>':'')+'</article>';
    }).join('');
    root.innerHTML=
      '<div class="toolbar care-case-header"><div><h2>'+esc(c.name)+'</h2>'+
@@ -504,7 +510,7 @@
       window.CareCollab.mount({db:state.db,caseId:c.id,profile:state.profile,focus:c.focus,note:c.note}).catch(e=>notify('載入交班討論失敗：'+errText(e),true));
    }
    if(window.HandoverRooms){
-      window.HandoverRooms.mount({db:state.db,caseId:c.id,profile:state.profile,user:state.user})
+      window.HandoverRooms.mount({db:state.db,caseId:c.id,profile:state.profile,user:state.user,onPublished:()=>refreshDashboard(false)})
         .catch(e=>notify('載入臨時交班室失敗：'+errText(e),true));
    }
  }
