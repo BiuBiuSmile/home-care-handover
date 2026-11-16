@@ -171,13 +171,31 @@
      $('adminEmail').focus();return;
    }
    const button=$('adminResetBtn');button.disabled=true;
+   let rateLimited=false;
    try{
      const redirectTo=window.location.origin+window.location.pathname;
-     await checkQuery(await state.db.auth.resetPasswordForEmail(email,{redirectTo}),'申請設定密碼');
+     // Keep the structured Auth error; checkQuery() wraps it and loses its 429/code.
+     const result=await state.db.auth.resetPasswordForEmail(email,{redirectTo});
+     if(result.error)throw result.error;
      authMessage('如果此 Email 存在有效帳號，密碼設定連結將寄至該信箱。請點擊郵件連結再設定新密碼。',false);
    }catch(error){
-     authMessage('目前無法寄送密碼設定連結，請稍後再試；必要時確認 Supabase Email 寄送與重導向網址設定。',true);
-   }finally{button.disabled=false}
+     const code=String(error?.code||'').toLowerCase();
+     const status=Number(error?.status||0);
+     if(status===429||code==='over_email_send_rate_limit'||code==='over_request_rate_limit'){
+       rateLimited=true;
+       authMessage('Supabase 目前已達驗證信寄送額度（429）。請先查看之前收到的管理員密碼設定信；若沒有可用的信件，建議約一小時後再試。這不是密碼格式或跳轉網址錯誤。',true);
+     }else if(code.includes('redirect')||code.includes('url_not_allowed')){
+       authMessage('密碼重設信的返回網址尚未獲 Supabase 允許，請管理員到 Authentication → URL Configuration 檢查 Redirect URLs。',true);
+     }else{
+       authMessage('目前無法寄送密碼設定信。請確認 Supabase Email 寄送設定；若持續發生，請提供詳細錯誤資訊以便查核。',true);
+     }
+   }finally{
+     if(rateLimited){
+       const originalLabel=button.textContent;
+       button.textContent='寄信額度限制中，請稍後重試';
+       window.setTimeout(()=>{button.disabled=false;button.textContent=originalLabel},90000);
+     }else button.disabled=false;
+   }
  }
  function showRecoveryError(error){
    state.recoveryActive=false;
