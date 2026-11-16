@@ -156,11 +156,21 @@
      if(isAdmin && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)){
        throw Error('請輸入有效的管理員 Email');
      }
-     await checkQuery(await state.db.auth.signInWithPassword(credentials),'登入驗證');
+     // Preserve Supabase Auth error code, otherwise phone-provider errors look like wrong passwords.
+     const result=await state.db.auth.signInWithPassword(credentials);
+     if(result.error)throw result.error;
      $('password').value='';
      await refreshIdentity();
    }catch(error){
-     authMessage('登入失敗，請確認'+(isAdmin?'管理員 Email':'手機號碼')+'與密碼是否正確。',true);
+     const code=String(error?.code||'').toLowerCase();
+     const message=String(error?.message||'').toLowerCase();
+     if(!isAdmin && (code==='phone_provider_disabled'||message.includes('phone logins are disabled'))){
+       authMessage('目前 Supabase 專案尚未啟用「Phone 手機登入」。這不是密碼錯誤；請管理員到 Supabase → Authentication → Sign In / Providers 啟用 Phone。',true);
+     }else if(code==='over_request_rate_limit'||error?.status===429){
+       authMessage('登入嘗試過於頻繁，請稍後再試，不要連續重複輸入。',true);
+     }else{
+       authMessage('登入失敗，請確認'+(isAdmin?'管理員 Email':'手機號碼')+'與密碼是否正確。',true);
+     }
    }finally{setBusy(form,false)}
  }
  async function requestAdminPasswordRecovery(){
