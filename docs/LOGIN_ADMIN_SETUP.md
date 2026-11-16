@@ -2,6 +2,19 @@
 
 本系統是 GitHub Pages + Supabase Auth + PostgreSQL 的獨立居家服務交班研究專案。
 
+## 管理員使用原 Email 登入與設定新密碼
+
+1. 前往 https://biubiusmile.github.io/home-care-handover/ 。
+2. 在登入卡片**右上角點「管理員登入」**；一般員工仍使用手機號碼＋密碼登入，不受影響。
+3. 管理員使用原本**已綁定且已驗證的 Email** 加上管理員個人密碼登入。這是原管理員帳號，不會建立第二組新管理員帳號。
+4. 忘記舊密碼或需要新增密碼時，在 Email 欄輸入**自己的管理員信箱**，點「忘記密碼／設定新的管理員密碼」。
+5. 透過信箱收取 Supabase Auth 密碼重設連結，點擊連結回到安護交班網站，在「設定管理員新密碼」頁面輸入兩次新密碼（建議至少 12 字元，須有英文與數字）。
+6. 更新成功後會自動登出，回到管理員 Email 登入頁，用新密碼重新登入。
+
+**必須完成的 Supabase Auth 設定**：到 [Authentication → URL Configuration](https://supabase.com/dashboard/project/zlkulrvbbjhxvimfhwjy/auth/url-configuration) 將 `https://biubiusmile.github.io/home-care-handover/` 加進 **Redirect URLs** 允許清單；否則重設信可能無法正確帶回網站。也要確認 Supabase 的密碼重設郵件寄送服務可用，必要時檢查垃圾信。
+
+原始管理員密碼不可從 Supabase Auth 查出；系統**沒有內建預設管理員密碼**，也不會把管理員帳號的新密碼寫入公開 GitHub。完成以上 Email 驗證步驟才算真正改設新密碼。
+
 ## 正式員工登入
 
 - **登入帳號**：台灣手機門號（09xxxxxxxx；系統轉換成國際格式）。
