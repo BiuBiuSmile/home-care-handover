@@ -189,23 +189,55 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 @media(max-width:680px){.admin-hero{padding:20px;border-radius:15px}.admin-hero h1{font-size:22px}.admin-hero-icon{display:none}.admin-summary{gap:8px}.admin-summary-item{padding:12px;gap:7px;flex-direction:column;align-items:flex-start}.admin-summary-icon{width:34px;height:34px;border-radius:10px;font-size:15px}.admin-summary-item strong{font-size:22px}.admin-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.admin-shortcuts a{padding:11px}.admin-section-header{padding:19px 16px;gap:10px;align-items:flex-start;flex-wrap:wrap}.admin-section-icon{width:39px;height:39px;border-radius:10px}.admin-section-text h2{font-size:18px}.admin-head-action{margin-left:auto;font-size:12px;padding:8px 10px;min-height:38px}.admin-user-toolbar{padding:17px 16px;align-items:stretch}.admin-search{width:100%;flex-basis:100%}.admin-compact-filter{flex:1}.admin-count{align-self:end;padding:5px 0}.staff-table-shell{padding:0 16px 12px}.staff-table tr{grid-template-columns:1fr 1fr;gap:12px}.staff-table td:first-child{grid-column:1/-1}.staff-table td:nth-child(4){grid-column:1/-1}.staff-actions .btn{flex:1}.admin-form{padding:17px 16px 20px}.admin-form-grid,.admin-form-grid.cols-three{grid-template-columns:1fr}.admin-form-section{padding:15px;margin-bottom:10px}.admin-form-actions{flex-direction:column;align-items:stretch}.admin-form-actions .action-inline{width:100%}.admin-form-actions .action-inline .btn{flex:1}.admin-form-actions .btn{width:100%}.admin-action-help{display:none}.admin-footnote{padding:13px 16px}.admin-mode-tag{margin-left:48px}.admin-assigned-list{padding:0 16px 18px}}
 @media(prefers-reduced-motion:reduce){.admin-shortcuts a,.admin-form .field input,.admin-form .field textarea{transition:none}}
 
+
+/* Staff login remains the default; admin email login is a small corner option. */
+.auth-card-select{position:relative}
+.auth-card-select .brand{padding-right:112px}
+.auth-corner-toggle{position:absolute;top:18px;right:18px;font-size:12px;font-weight:750;
+ background:#f0f8f6;border:1px solid #cfe5df;border-radius:100px;color:#087d75;padding:8px 11px;cursor:pointer}
+.auth-corner-toggle:hover{background:#e4f4ef}
+.admin-reset-actions{margin-top:12px;text-align:right}
+.admin-reset-actions button{background:transparent;border:0;padding:6px 2px;color:#087d75;font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer}
+.admin-reset-actions p{font-size:12px;color:#71858e;margin:5px 0;text-align:left;line-height:1.6}
+.admin-recovery-card{max-width:480px}
+.admin-recovery-card .help{line-height:1.7}
+@media(max-width:480px){.auth-corner-toggle{top:12px;right:12px;font-size:11px}.auth-card-select .brand{padding-right:103px}}
 </style>
 </head>
 <body>
 <section class="auth-shell" id="authScreen">
- <div class="auth-card">
+ <div class="auth-card auth-card-select">
+  <button id="toggleAdminLogin" class="auth-corner-toggle" type="button" aria-pressed="false">管理員登入</button>
   <div class="brand"><span class="logo">護</span> 安護交班</div>
-  <h1>員工帳號登入</h1>
-  <p class="help">由管理員建立帳號。員工只需使用手機號碼和個人密碼登入，不需要自行申請或收簡訊。</p>
+  <h1 id="authHeading">員工帳號登入</h1>
+  <p class="help" id="authHint">員工使用手機號碼和個人密碼登入；帳號由管理員建立。</p>
   <div id="configMessage" class="msg error" hidden>Supabase 連線尚未設定，請通知系統管理員。</div>
   <form id="authForm">
-   <div class="field"><label for="phone">手機門號（帳號）</label><input id="phone" type="tel" inputmode="tel" autocomplete="username" placeholder="例如 0912345678" maxlength="20" required></div>
+   <div class="field" id="staffPhoneField"><label for="phone">手機門號（帳號）</label><input id="phone" type="tel" inputmode="tel" autocomplete="username" placeholder="例如 0912345678" maxlength="20" required></div>
+   <div class="field" id="adminEmailField" hidden><label for="adminEmail">管理員 Email</label><input id="adminEmail" type="email" inputmode="email" autocomplete="username" placeholder="請輸入原本的管理員信箱" maxlength="254"></div>
    <div class="field"><label for="password">密碼</label><input id="password" type="password" autocomplete="current-password" minlength="8" required></div>
    <button class="btn" type="submit" style="width:100%;margin-top:12px" id="authSubmit">登入</button>
   </form>
+  <div id="adminResetActions" class="admin-reset-actions" hidden>
+   <button id="adminResetBtn" type="button">忘記密碼／設定新的管理員密碼</button>
+   <p>密碼設定連結會寄至你輸入的管理員 Email；不會在網頁上顯示原始密碼。</p>
+  </div>
   <div id="authMessage" role="status" aria-live="polite"></div>
-  <p class="help">帳號需由管理員建檔。初始密碼僅供首次登入，系統會要求立即更改；請勿使用身分證字號作為長期密碼。</p>
+  <p class="help" id="staffLoginFooter">帳號需由管理員建檔。請勿使用身分證字號作為長期密碼。</p>
   <p><a href="demo.html">開啟不含真實資料的互動示範版</a></p>
+ </div>
+</section>
+<section class="auth-shell" id="adminRecoveryScreen" hidden>
+ <div class="auth-card admin-recovery-card">
+  <div class="brand"><span class="logo">護</span> 安護交班</div>
+  <h1>設定管理員新密碼</h1>
+  <p class="help">已透過 Email 的安全連結驗證身分。新密碼建議至少 12 字元，混合英文字母、數字與符號；不使用身分證字號。</p>
+  <form id="adminRecoveryForm">
+   <div class="field"><label for="adminNewPassword">新密碼</label><input id="adminNewPassword" type="password" autocomplete="new-password" minlength="12" maxlength="72" required></div>
+   <div class="field"><label for="adminNewPasswordConfirm">再次輸入新密碼</label><input id="adminNewPasswordConfirm" type="password" autocomplete="new-password" minlength="12" maxlength="72" required></div>
+   <button id="adminRecoverySubmit" class="btn" style="width:100%;margin-top:12px" type="submit">確認設定新密碼</button>
+  </form>
+  <div id="adminRecoveryNotice" role="status" aria-live="polite"></div>
  </div>
 </section>
 <section class="auth-shell" id="changeScreen" hidden>
