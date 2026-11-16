@@ -228,6 +228,13 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
  <main class="page">
   <div class="navtabs"><button class="active" type="button" id="casesTab">交班工作台</button><button type="button" id="adminTab" hidden>管理員後台</button></div>
   <section id="casesPage">
+   <section id="tempInboxPanel" class="panel temp-inbox-panel" hidden aria-label="收到的臨時交班邀請">
+    <div class="temp-inbox-head"><div><h2>受邀臨時交班</h2><p>搜尋你收到邀請的個案，直接進入 A 建立的 48 小時交班室，無須等待居督指派。</p></div><span id="tempInboxCount" class="temp-pill live">0 間進行中</span></div>
+    <label class="temp-inbox-search"><span>搜尋受邀個案</span><input id="tempInboxSearch" type="search" placeholder="輸入個案姓名或交班主題…" autocomplete="off"></label>
+    <div id="tempInboxList" class="temp-inbox-list"><p class="temp-empty">讀取臨時交班邀請中…</p></div>
+    <p class="temp-inbox-safety">僅顯示 A 指定你接班的交班室，不會提供其他未授權個案資料。</p>
+   </section>
+   <div id="tempInboxWorkspace" class="panel temp-inbox-workspace" hidden></div>
    <div id="caseBrowser" class="case-browser">
     <div class="overview-heading">
      <div><div class="eyebrow">個案交班 · 工作總覽</div><h1>服務個案總覽</h1><p>快速找到個案、確認待閱交班，再查看完整的照顧重點與歷史紀錄。</p></div>
