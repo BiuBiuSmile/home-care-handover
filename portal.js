@@ -202,8 +202,8 @@
    const password=$('adminNewPassword').value,confirm=$('adminNewPasswordConfirm').value;
    const box=$('adminRecoveryNotice');
    if(password!==confirm){box.textContent='兩次輸入的密碼不一致。';box.className='msg error';return}
-   if(password.length<12||password.length>72||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password)||/^[a-z][12]\d{8}$/i.test(password)){
-     box.textContent='新密碼須為 12～72 字元，至少包含英文字母與數字，且不可使用身分證字號。';box.className='msg error';return;
+   if(password.length<10||password.length>72||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password)){
+     box.textContent='新密碼須為 10～72 字元，且至少包含英文字母與數字（可使用身分證字號格式）。';box.className='msg error';return;
    }
    const form=$('adminRecoveryForm');setBusy(form,true);
    try{
