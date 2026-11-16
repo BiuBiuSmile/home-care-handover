@@ -466,7 +466,7 @@
      '<div class="care-tabs" role="tablist" aria-label="個案交班功能">'+
        '<button class="care-tab active" data-care-tab="guide" role="tab" aria-selected="true" type="button">照顧檔案</button>'+
        '<button class="care-tab" data-care-tab="discussion" role="tab" aria-selected="false" type="button">交班討論</button>'+
-       '<button class="care-tab" data-care-tab="rooms" role="tab" aria-selected="false" type="button">24 小時臨時交班室</button>'+
+       '<button class="care-tab" data-care-tab="rooms" role="tab" aria-selected="false" type="button">48 小時臨時交班室</button>'+
        '<button class="care-tab" data-care-tab="history" role="tab" aria-selected="false" type="button">正式交班 <span class="care-tab-count">'+rec.length+'</span></button>'+
      '</div>'+
      '<section data-care-panel="guide" class="care-tab-panel">'+
