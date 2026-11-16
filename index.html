@@ -231,10 +231,10 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
  <div class="auth-card admin-recovery-card">
   <div class="brand"><span class="logo">護</span> 安護交班</div>
   <h1>設定管理員新密碼</h1>
-  <p class="help">已透過 Email 的安全連結驗證身分。新密碼建議至少 12 字元，混合英文字母、數字與符號；不使用身分證字號。</p>
+  <p class="help">已透過 Email 安全連結驗證身分。新密碼可設定為 10～72 碼英數組合，也接受身分證字號格式；考量個資安全，不建議使用真實身分證字號。</p>
   <form id="adminRecoveryForm">
-   <div class="field"><label for="adminNewPassword">新密碼</label><input id="adminNewPassword" type="password" autocomplete="new-password" minlength="12" maxlength="72" required></div>
-   <div class="field"><label for="adminNewPasswordConfirm">再次輸入新密碼</label><input id="adminNewPasswordConfirm" type="password" autocomplete="new-password" minlength="12" maxlength="72" required></div>
+   <div class="field"><label for="adminNewPassword">新密碼</label><input id="adminNewPassword" type="password" autocomplete="new-password" minlength="10" maxlength="72" required></div>
+   <div class="field"><label for="adminNewPasswordConfirm">再次輸入新密碼</label><input id="adminNewPasswordConfirm" type="password" autocomplete="new-password" minlength="10" maxlength="72" required></div>
    <button id="adminRecoverySubmit" class="btn" style="width:100%;margin-top:12px" type="submit">確認設定新密碼</button>
   </form>
   <div id="adminRecoveryNotice" role="status" aria-live="polite"></div>
