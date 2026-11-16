@@ -6,7 +6,7 @@
 (function(){
  const $ = id => document.getElementById(id);
  const config = window.CARE_CONFIG || {};
- const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',resetTarget:null,deleteTarget:null,caseOpen:false,casePage:1,caseFilter:'all',caseSort:'attention',caseView:'cards',browserScroll:0};
+ const state = {db:null,user:null,profile:null,cases:[],records:[],reads:[],profiles:[],assignments:[],current:null,editing:null,tab:'cases',resetTarget:null,deleteTarget:null,caseOpen:false,casePage:1,caseFilter:'all',caseSort:'attention',caseView:'cards',browserScroll:0,authMode:'staff',recoveryActive:false};
  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
  const roles = {admin:'管理員',supervisor:'居督',staff:'居服員'};
  const when = v => v ? new Date(v).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}) : '';
@@ -19,7 +19,7 @@
    const el=$('authMessage');el.textContent=message;el.className='msg'+(failed?' error':'');
  }
  function show(screen){
-   ['authScreen','changeScreen','pendingScreen','appScreen'].forEach(x=>$(x).hidden=x!==screen);
+   ['authScreen','adminRecoveryScreen','changeScreen','pendingScreen','appScreen'].forEach(x=>$(x).hidden=x!==screen);
  }
  function setBusy(form,busy){
    Array.from(form.querySelectorAll('button,input,select,textarea')).forEach(el=>el.disabled=busy);
@@ -33,6 +33,9 @@
  }
  async function init(){
    window.HandoverRooms?.bindInbox();
+   $('toggleAdminLogin').addEventListener('click',()=>setAuthMode(state.authMode==='staff'?'admin':'staff'));
+   $('adminResetBtn').addEventListener('click',requestAdminPasswordRecovery);
+   $('adminRecoveryForm').addEventListener('submit',submitAdminPasswordRecovery);
    $('authForm').addEventListener('submit',handleAuth);
    $('changePasswordForm').addEventListener('submit',changeFirstPassword);
    $('changeLogout').addEventListener('click',logout);
@@ -102,14 +105,21 @@
      return;
    }
    state.db=window.supabase.createClient(config.SUPABASE_URL,config.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+   state.recoveryActive=/[?&]type=recovery(?:&|$)/.test(window.location.hash)||new URLSearchParams(window.location.search).get('type')==='recovery';
    state.db.auth.onAuthStateChange((event,session)=>{
+     if(event==='PASSWORD_RECOVERY'){
+       state.recoveryActive=true;
+       setTimeout(()=>verifyAdminRecovery().catch(e=>showRecoveryError(e)),0);
+       return;
+     }
      if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='TOKEN_REFRESHED'||event==='USER_UPDATED'||event==='INITIAL_SESSION'){
-       setTimeout(()=>setSession(session).catch(e=>notify(errText(e),true)),0);
+       if(!state.recoveryActive)setTimeout(()=>setSession(session).catch(e=>notify(errText(e),true)),0);
      }
    });
    const result=await state.db.auth.getSession();
    await checkQuery(result,'確認登入狀態');
-   await setSession(result.data.session);
+   if(state.recoveryActive)await verifyAdminRecovery().catch(e=>showRecoveryError(e));
+   else await setSession(result.data.session);
  }
  function phoneE164(input){
    const raw=String(input||'').trim().replace(/[\s()-]/g,'');
@@ -118,17 +128,94 @@
    if(/^\+8869\d{8}$/.test(raw))return raw;
    throw Error('請輸入有效的台灣手機門號，例如 0912345678 或 +886912345678');
  }
+ function setAuthMode(mode){
+   state.authMode=mode==='admin'?'admin':'staff';
+   const isAdmin=state.authMode==='admin';
+   $('staffPhoneField').hidden=isAdmin;
+   $('adminEmailField').hidden=!isAdmin;
+   $('phone').required=!isAdmin;
+   $('adminEmail').required=isAdmin;
+   $('adminResetActions').hidden=!isAdmin;
+   $('staffLoginFooter').hidden=isAdmin;
+   $('toggleAdminLogin').textContent=isAdmin?'返回員工登入':'管理員登入';
+   $('toggleAdminLogin').setAttribute('aria-pressed',String(isAdmin));
+   $('authHeading').textContent=isAdmin?'管理員登入':'員工帳號登入';
+   $('authHint').textContent=isAdmin?'使用原本管理員 Email 與個人密碼登入。若尚未設定新密碼，請使用下方的密碼設定連結。':'員工使用手機號碼和個人密碼登入；帳號由管理員建立。';
+   $('authSubmit').textContent=isAdmin?'管理員登入':'登入';
+   $('password').value='';
+   authMessage('',false);
+ }
  async function handleAuth(e){
-   e.preventDefault();if(!state.db)return;
-   const form=$('authForm'),password=$('password').value;
+   e.preventDefault();if(!state.db || state.recoveryActive)return;
+   const form=$('authForm'),password=$('password').value,isAdmin=state.authMode==='admin';
    setBusy(form,true);
    try{
-     const phone=phoneE164($('phone').value);
-     await checkQuery(await state.db.auth.signInWithPassword({phone,password}),'登入驗證');
+     const credentials=isAdmin
+       ? {email:$('adminEmail').value.trim().toLowerCase(),password}
+       : {phone:phoneE164($('phone').value),password};
+     if(isAdmin && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)){
+       throw Error('請輸入有效的管理員 Email');
+     }
+     await checkQuery(await state.db.auth.signInWithPassword(credentials),'登入驗證');
      $('password').value='';
      await refreshIdentity();
    }catch(error){
-     authMessage('登入失敗，請確認管理員已建立此帳號，以及手機號碼和密碼是否正確。',true);
+     authMessage('登入失敗，請確認'+(isAdmin?'管理員 Email':'手機號碼')+'與密碼是否正確。',true);
+   }finally{setBusy(form,false)}
+ }
+ async function requestAdminPasswordRecovery(){
+   if(!state.db || state.authMode!=='admin')return;
+   const email=$('adminEmail').value.trim().toLowerCase();
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+     authMessage('請先輸入管理員原本使用的 Email。',true);
+     $('adminEmail').focus();return;
+   }
+   const button=$('adminResetBtn');button.disabled=true;
+   try{
+     const redirectTo=window.location.origin+window.location.pathname;
+     await checkQuery(await state.db.auth.resetPasswordForEmail(email,{redirectTo}),'申請設定密碼');
+     authMessage('如果此 Email 存在有效帳號，密碼設定連結將寄至該信箱。請點擊郵件連結再設定新密碼。',false);
+   }catch(error){
+     authMessage('目前無法寄送密碼設定連結，請稍後再試；必要時確認 Supabase Email 寄送與重導向網址設定。',true);
+   }finally{button.disabled=false}
+ }
+ function showRecoveryError(error){
+   state.recoveryActive=false;
+   setAuthMode('admin');
+   show('authScreen');
+   authMessage('管理員密碼設定連結無效或已過期，請重新申請。',true);
+ }
+ async function verifyAdminRecovery(){
+   if(!state.db||!state.recoveryActive)return;
+   const {data,error}=await state.db.auth.getUser();
+   if(error||!data?.user)throw Error('連結未成功驗證');
+   const profile=await state.db.from('profiles').select('role,active').eq('id',data.user.id).single();
+   if(profile.error||profile.data?.role!=='admin'||!profile.data?.active){
+     await state.db.auth.signOut();
+     throw Error('非有效管理員');
+   }
+   $('adminRecoveryNotice').textContent='';
+   show('adminRecoveryScreen');
+ }
+ async function submitAdminPasswordRecovery(e){
+   e.preventDefault();if(!state.db||!state.recoveryActive)return;
+   const password=$('adminNewPassword').value,confirm=$('adminNewPasswordConfirm').value;
+   const box=$('adminRecoveryNotice');
+   if(password!==confirm){box.textContent='兩次輸入的密碼不一致。';box.className='msg error';return}
+   if(password.length<12||password.length>72||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password)||/^[a-z][12]\d{8}$/i.test(password)){
+     box.textContent='新密碼須為 12～72 字元，至少包含英文字母與數字，且不可使用身分證字號。';box.className='msg error';return;
+   }
+   const form=$('adminRecoveryForm');setBusy(form,true);
+   try{
+     await verifyAdminRecovery();
+     await checkQuery(await state.db.auth.updateUser({password}),'設定管理員密碼');
+     $('adminRecoveryForm').reset();
+     await checkQuery(await state.db.auth.signOut(),'完成重設後登出');
+     state.recoveryActive=false;
+     setAuthMode('admin');show('authScreen');
+     authMessage('管理員新密碼已設定完成。請使用原本 Email 與新密碼登入。',false);
+   }catch(error){
+     box.textContent='設定失敗：'+errText(error);box.className='msg error';
    }finally{setBusy(form,false)}
  }
  async function changeFirstPassword(e){
@@ -274,6 +361,7 @@
    }
  }
  async function setSession(session){
+   if(state.recoveryActive)return;
    if(!session?.user){
      window.CareCollab?.destroy();
      window.HandoverRooms?.destroy();
@@ -308,6 +396,12 @@
      }
      const r=await state.db.from('profiles').select('id,display_name,role,active,must_change_password').eq('id',user.id).single();
      state.profile=await checkQuery(r,'取得帳號權限');
+     if(state.authMode==='admin'&&state.profile.role!=='admin'){
+       await state.db.auth.signOut();
+       show('authScreen');
+       authMessage('這個 Email 並非管理員帳號，請使用員工登入或正確的管理員帳號。',true);
+       return;
+     }
      if(state.profile.must_change_password){show('changeScreen');return;}
      if(!state.profile.active){
        $('pendingTitle').textContent='帳號尚未啟用';
