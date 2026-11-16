@@ -105,7 +105,7 @@
      return;
    }
    state.db=window.supabase.createClient(config.SUPABASE_URL,config.SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-   state.recoveryActive=/[?&]type=recovery(?:&|$)/.test(window.location.hash)||new URLSearchParams(window.location.search).get('type')==='recovery';
+   state.recoveryActive=/[?&]type=recovery(?:&|$)/.test(window.location.hash)||/[?&]type=recovery(?:&|$)/.test(window.location.search);
    state.db.auth.onAuthStateChange((event,session)=>{
      if(event==='PASSWORD_RECOVERY'){
        state.recoveryActive=true;
