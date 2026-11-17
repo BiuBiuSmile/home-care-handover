@@ -33,6 +33,7 @@
  }
  async function init(){
    window.HandoverRooms?.bindInbox();
+   window.TeamPoints?.bind();
    $('toggleAdminLogin').addEventListener('click',()=>setAuthMode(state.authMode==='staff'?'admin':'staff'));
    $('adminResetBtn').addEventListener('click',requestAdminPasswordRecovery);
    $('adminRecoveryForm').addEventListener('submit',submitAdminPasswordRecovery);
@@ -62,10 +63,12 @@
    $('logoutBtn').addEventListener('click',logout);
    $('casesTab').addEventListener('click',()=>chooseTab('cases'));
    $('rewardsTab').addEventListener('click',()=>chooseTab('rewards'));
+   $('teamPointsTab').addEventListener('click',()=>chooseTab('teamPoints'));
    $('adminTab').addEventListener('click',async()=>{chooseTab('admin');try{await loadAdmin()}catch(e){notify(errText(e),true)}});
    $('reloadAdmin').addEventListener('click',async()=>{try{await loadAdmin();notify('已更新管理資料')}catch(e){notify(errText(e),true)}});
    $('adminUserSearch').addEventListener('input',renderUsers);
    $('adminUserRoleFilter').addEventListener('change',renderUsers);
+   $('adminUserSort').addEventListener('change',renderUsers);
    $('checkLoginMigration').addEventListener('click',checkStaffLoginMigration);
    $('pilotLoginMigration').addEventListener('click',()=>migrateStaffLogins(true));
    $('migrateRemainingLogins').addEventListener('click',()=>migrateStaffLogins(false));
@@ -97,6 +100,11 @@
      if(checkbox){const label=checkbox.closest('.staff-state')?.querySelector('span');if(label)label.textContent=checkbox.checked?'已啟用':'已停用'}
    });
    $('usersBody').addEventListener('click',e=>{
+     const points=e.target.closest('[data-view-points]');
+     if(points){
+       window.TeamPoints?.openUser({db:state.db,user:state.user,profile:state.profile},points.dataset.viewPoints);
+       return;
+     }
      const b=e.target.closest('[data-reset-profile]');
      if(b){openResetPassword(b.dataset.resetProfile);return}
      const del=e.target.closest('[data-delete-profile]');
@@ -411,6 +419,7 @@
      window.HandoverRooms?.destroy();
      window.HandoverRooms?.clearInbox();
      window.Rewards?.destroy();
+     window.TeamPoints?.destroy();
      state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
      state.current=null;state.caseOpen=false;state.casePage=1;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -421,6 +430,7 @@
      window.HandoverRooms?.destroy();
      window.HandoverRooms?.clearInbox();
      window.Rewards?.destroy();
+     window.TeamPoints?.destroy();
      state.cases=[];state.records=[];state.reads=[];state.current=null;
      state.caseOpen=false;state.casePage=1;state.browserScroll=0;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -456,6 +466,7 @@
      }
      $('identity').textContent=state.profile.display_name+'｜'+(roles[state.profile.role]||state.profile.role);
      $('adminTab').hidden=!canAdmin();
+     $('teamPointsTab').hidden=!['admin','supervisor'].includes(state.profile.role);
      await refreshDashboard(false);show('appScreen');
      chooseTab('cases');
    }catch(e){notify(errText(e),true);show('authScreen')}
@@ -464,20 +475,24 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.Rewards?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.Rewards?.destroy();window.TeamPoints?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
-   if(!['cases','admin','rewards'].includes(tab))return;
+   if(!['cases','admin','rewards','teamPoints'].includes(tab))return;
    if(tab==='admin'&&!canAdmin())return;
    if(tab==='rewards'&&!state.profile?.active)return;
+   if(tab==='teamPoints'&&!['admin','supervisor'].includes(state.profile?.role))return;
    state.tab=tab;
    $('casesPage').hidden=tab!=='cases';
    $('adminPage').hidden=tab!=='admin';
    $('rewardsPage').hidden=tab!=='rewards';
+   $('teamPointsPage').hidden=tab!=='teamPoints';
    $('casesTab').classList.toggle('active',tab==='cases');
    $('adminTab').classList.toggle('active',tab==='admin');
    $('rewardsTab').classList.toggle('active',tab==='rewards');
+   $('teamPointsTab').classList.toggle('active',tab==='teamPoints');
    if(tab==='rewards')window.Rewards?.show({db:state.db,user:state.user,profile:state.profile});
+   if(tab==='teamPoints')window.TeamPoints?.show({db:state.db,user:state.user,profile:state.profile});
  }
  async function refreshDashboard(message=true){
    if(!state.profile?.active)return;
@@ -682,16 +697,34 @@
  }
  async function loadAdmin(){
    if(!canAdmin())return;
-   const [p,a]=await Promise.all([
+   const [p,a,points]=await Promise.all([
      state.db.from('profiles').select('id,display_name,role,active,must_change_password,login_phone,created_at').order('created_at',{ascending:false}),
-     state.db.from('case_assignments').select('case_id,user_id,created_at').order('created_at',{ascending:false})
+     state.db.from('case_assignments').select('case_id,user_id,created_at').order('created_at',{ascending:false}),
+     state.db.rpc('list_user_point_balances')
    ]);
-   state.profiles=await checkQuery(p,'取得帳號清單');
+   const baseProfiles=await checkQuery(p,'取得帳號清單');
+   const pointRows=await checkQuery(points,'取得全員點數');
+   const pointMap=new Map(pointRows.map(row=>[row.user_id,row]));
+   state.profiles=baseProfiles.map(profile=>({
+     ...profile,
+     total_points:Number(pointMap.get(profile.id)?.total_points||0),
+     earned_points:Number(pointMap.get(profile.id)?.earned_points||0)
+   }));
    state.assignments=await checkQuery(a,'取得指派清單');
    await refreshDashboard(false);
-   $('adminTotalUsers').textContent=String(state.profiles.length);
-   $('adminActiveUsers').textContent=String(state.profiles.filter(p=>p.active).length);
+   const count=state.profiles.length;
+   const active=state.profiles.filter(p=>p.active).length;
+   const staff=state.profiles.filter(p=>p.role==='staff').length;
+   const leaders=state.profiles.filter(p=>['supervisor','admin'].includes(p.role)).length;
+   const allPoints=state.profiles.reduce((sum,p)=>sum+p.total_points,0);
+   $('adminTotalUsers').textContent=String(count);
+   $('adminActiveUsers').textContent=String(active);
    $('adminTotalCases').textContent=String(state.cases.length);
+   $('adminUsersCount').textContent=String(count);
+   $('adminUsersActive').textContent=String(active);
+   $('adminUsersStaff').textContent=String(staff);
+   $('adminUsersLeaders').textContent=String(leaders);
+   $('adminUsersPoints').textContent=allPoints.toLocaleString('zh-TW')+' 點';
    renderUsers();renderAssignControls();
    state.primarySyncPreview=null;
    $('applyPrimarySync').disabled=true;
@@ -737,31 +770,42 @@
  function renderUsers(){
    const query=$('adminUserSearch').value.trim().toLocaleLowerCase('zh-TW');
    const roleFilter=$('adminUserRoleFilter').value;
+   const sortBy=$('adminUserSort').value;
+   const collator=new Intl.Collator('zh-TW',{numeric:true,sensitivity:'base'});
    const shown=state.profiles.filter(p=>{
-     const localPhone=p.login_phone && /^8869\d{8}$/.test(p.login_phone)?'0'+p.login_phone.slice(3):'';
-     const matchName=String(p.display_name||'').toLocaleLowerCase('zh-TW').includes(query)||localPhone.includes(query);
-     const matchRole=roleFilter==='all'||p.role===roleFilter;
-     return matchName&&matchRole;
+     const phone=p.login_phone && /^8869\d{8}$/.test(p.login_phone)?'0'+p.login_phone.slice(3):'';
+     const matchName=String(p.display_name||'').toLocaleLowerCase('zh-TW').includes(query)||phone.includes(query);
+     return matchName&&(roleFilter==='all'||p.role===roleFilter);
+   }).sort((a,b)=>{
+     if(sortBy==='points_desc')return b.total_points-a.total_points||collator.compare(a.display_name,b.display_name);
+     if(sortBy==='points_asc')return a.total_points-b.total_points||collator.compare(a.display_name,b.display_name);
+     if(sortBy==='role')return collator.compare(roles[a.role]||a.role,roles[b.role]||b.role)||collator.compare(a.display_name,b.display_name);
+     return collator.compare(a.display_name,b.display_name);
    });
    $('adminUserSummary').textContent='顯示 '+shown.length+' / '+state.profiles.length+' 位';
    $('usersBody').innerHTML=shown.map(p=>{
      const self=p.id===state.user.id;
-     const manageable=!self && (p.role==='staff'||p.role==='supervisor');
+     const manageable=!self&&(p.role==='staff'||p.role==='supervisor');
      const options=Object.keys(roles).map(role=>'<option value="'+role+'" '+(p.role===role?'selected':'')+'>'+roles[role]+'</option>').join('');
-     const reset=manageable
-       ? '<button type="button" class="btn alt" data-reset-profile="'+esc(p.id)+'">重設密碼</button>' : '';
-     const remove=manageable
-       ? '<button type="button" class="btn warn" data-delete-profile="'+esc(p.id)+'">刪除使用者</button>' : '';
+     const reset=manageable?'<button type="button" class="btn alt" data-reset-profile="'+esc(p.id)+'">重設密碼</button>':'';
+     const remove=manageable?'<button type="button" class="btn warn" data-delete-profile="'+esc(p.id)+'">刪除使用者</button>':'';
      const avatar=String(p.display_name||'?').trim().slice(0,1)||'?';
      const meta=self?'<span class="pill ok staff-self">自己</span>':'<span class="staff-role-small">'+esc(roles[p.role]||p.role)+'</span>';
-     const staffPhone=p.login_phone && /^8869\d{8}$/.test(p.login_phone)?'0'+p.login_phone.slice(3):'';
+     const phone=p.login_phone && /^8869\d{8}$/.test(p.login_phone)?'0'+p.login_phone.slice(3):'';
      return '<tr class="staff-row">'+
-       '<td data-label="使用者"><div class="staff-person"><span class="staff-avatar" aria-hidden="true">'+esc(avatar)+'</span><div class="staff-person-copy"><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><div class="staff-subline">'+meta+(staffPhone?'<span>登入：'+esc(staffPhone)+'</span>':'')+'<span>'+esc(p.id.slice(0,8))+'…</span></div></div></div></td>'+
+       '<td data-label="員工資料"><div class="staff-person"><span class="staff-avatar" aria-hidden="true">'+esc(avatar)+'</span><div class="staff-person-copy">'+
+       '<input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'>'+
+       '<div class="staff-subline">'+meta+(phone?'<span>登入：'+esc(phone)+'</span>':'')+
+       '<span>'+esc(p.id.slice(0,8))+'…</span></div></div></div></td>'+
        '<td data-label="帳號角色" class="staff-role-col"><select aria-label="'+esc(p.display_name)+'的角色" data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td>'+
-       '<td data-label="使用狀態"><label class="staff-state"><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'><span>'+(p.active?'已啟用':'已停用')+'</span></label></td>'+
-       '<td data-label="管理操作"><div class="staff-actions"><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button>'+reset+remove+'</div></td>'+
+       '<td data-label="使用狀態"><label class="staff-state"><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'>'+
+       '<span>'+(p.active?'已啟用':'已停用')+'</span></label></td>'+
+       '<td data-label="可用點數"><div class="admin-user-point-cell"><strong class="points-value">'+Number(p.total_points||0).toLocaleString('zh-TW')+
+       ' <span>點</span></strong><button class="points-view-btn" type="button" data-view-points="'+esc(p.id)+'">查看明細</button></div></td>'+
+       '<td data-label="管理操作"><div class="staff-actions"><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button>'+
+       reset+remove+'</div></td>'+
        '</tr>';
-   }).join('')||'<tr><td colspan="4" class="staff-empty">目前沒有符合條件的使用者，請調整搜尋或角色篩選。</td></tr>';
+   }).join('')||'<tr><td colspan="5" class="staff-empty">目前沒有符合條件的使用者，請調整搜尋或角色篩選。</td></tr>';
  }
  async function saveProfileFromRow(e){
    const b=e.target.closest('[data-save-profile]');if(!b)return;
