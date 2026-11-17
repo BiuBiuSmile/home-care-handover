@@ -72,6 +72,75 @@ Deno.serve(async (req: Request) => {
     }
 
     const action = String(payload.action ?? "create");
+    // Case import stores a caregiver's name as text. Names do not grant RLS access:
+    // admin explicitly previews/approves exact unique matches before assignments.
+    if (action === "primary_assignment_preview" || action === "primary_assignment_sync") {
+      const [caseResult,profileResult,assignmentResult] = await Promise.all([
+        db.from("cases").select("id,caregiver_name").order("id").limit(1000),
+        db.from("profiles").select("id,display_name,role,active").limit(500),
+        db.from("case_assignments").select("case_id,user_id").limit(3000),
+      ]);
+      if (caseResult.error || profileResult.error || assignmentResult.error ||
+          !caseResult.data || !profileResult.data || !assignmentResult.data) {
+        return reply(500,"無法核對主責個案與指派，請重新整理");
+      }
+      const cases=caseResult.data;
+      const workers=profileResult.data.filter(p=>p.role==="staff" && p.active);
+      const staffByName=new Map<string, typeof workers>();
+      const usersById=new Map(profileResult.data.map(p=>[p.id,p]));
+      for (const worker of workers) {
+        const key=String(worker.display_name||"").trim();
+        if (!key) continue;
+        staffByName.set(key,[...(staffByName.get(key)||[]),worker]);
+      }
+      const existing=new Set(assignmentResult.data.map(x=>x.case_id+"|"+x.user_id));
+      const staffAssignmentsByCase=new Map<string, Set<string>>();
+      for(const x of assignmentResult.data){
+        const person=usersById.get(x.user_id);
+        if (person?.role!=="staff")continue;
+        if(!staffAssignmentsByCase.has(x.case_id))staffAssignmentsByCase.set(x.case_id,new Set());
+        staffAssignmentsByCase.get(x.case_id)!.add(x.user_id);
+      }
+      const proposed:{case_id:string,user_id:string}[]=[];
+      let noMatchingWorker=0,ambiguousWorker=0,conflicts=0,alreadyAssigned=0,blankNames=0;
+      for(const c of cases){
+        const name=String(c.caregiver_name||"").trim();
+        if(!name){blankNames++;continue}
+        const matches=staffByName.get(name)||[];
+        if(matches.length===0){noMatchingWorker++;continue}
+        if(matches.length!==1){ambiguousWorker++;continue}
+        const chosen=matches[0];
+        if(existing.has(c.id+"|"+chosen.id)){alreadyAssigned++;continue}
+        const staffList=staffAssignmentsByCase.get(c.id)||new Set<string>();
+        if([...staffList].some(uid=>uid!==chosen.id)){conflicts++;continue}
+        proposed.push({case_id:c.id,user_id:chosen.id});
+      }
+      // The digest binds confirmation to the exact case+worker set in a preview,
+      // not simply a count that might hide changed access rights.
+      const payloadStr=proposed.map(x=>x.case_id+"|"+x.user_id).sort().join("\n");
+      const digest=new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(payloadStr)));
+      const previewToken=Array.from(digest).map(x=>x.toString(16).padStart(2,"0")).join("");
+      const stats={
+        cases:cases.length,already_assigned:alreadyAssigned,pending:proposed.length,
+        conflicts,no_matching_worker:noMatchingWorker,ambiguous_worker:ambiguousWorker,
+        blank_names:blankNames,preview_token:previewToken,
+      };
+      if(action==="primary_assignment_preview"){
+        return reply(200,"已核對主責居服員與正式指派",stats);
+      }
+      if(String(payload.confirm||"")!=="同步主責指派" ||
+         String(payload.preview_token||"")!==previewToken){
+        return reply(409,"指派名單已有變更，或尚未確認，請重新預覽",stats);
+      }
+      if(!proposed.length)return reply(200,"所有可安全比對的主責個案都已指派",{...stats,created:0});
+      const {data:inserted,error:insertError}=await db.from("case_assignments")
+        .upsert(proposed,{onConflict:"case_id,user_id",ignoreDuplicates:true})
+        .select("case_id");
+      if(insertError)return reply(409,"指派寫入失敗，請重新核對後再試");
+      return reply(200,"已同步姓名完全相符且無人員衝突的主責個案",
+        {...stats,created:inserted?.length??0});
+    }
+
     // Read-only status and separately confirmed migration, administrator only.
     if (action === "migration_status" || action === "migrate_logins") {
       const { data: people, error: peopleError } = await db.from("profiles")
