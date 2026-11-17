@@ -65,6 +65,9 @@
    $('reloadAdmin').addEventListener('click',async()=>{try{await loadAdmin();notify('已更新管理資料')}catch(e){notify(errText(e),true)}});
    $('adminUserSearch').addEventListener('input',renderUsers);
    $('adminUserRoleFilter').addEventListener('change',renderUsers);
+   $('checkLoginMigration').addEventListener('click',checkStaffLoginMigration);
+   $('pilotLoginMigration').addEventListener('click',()=>migrateStaffLogins(true));
+   $('migrateRemainingLogins').addEventListener('click',()=>migrateStaffLogins(false));
    $('refreshBtn').addEventListener('click',()=>refreshDashboard());
    $('caseSearch').addEventListener('input',()=>{state.casePage=1;renderCaseList()});
    $('caseFilter').addEventListener('change',value=>{state.caseFilter=$('caseFilter').value;state.casePage=1;renderCaseList()});
@@ -128,6 +131,11 @@
    if(/^\+8869\d{8}$/.test(raw))return raw;
    throw Error('請輸入有效的台灣手機門號，例如 0912345678 或 +886912345678');
  }
+ // Synthetic login identifier is never displayed to employees and no Email is sent.
+ // Keep this exact mapping in sync with the server-side admin-create-staff function.
+ function internalStaffEmail(phone){
+   return 'u'+phoneE164(phone).slice(1)+'@staff-login.chkia.dev';
+ }
  function setAuthMode(mode){
    state.authMode=mode==='admin'?'admin':'staff';
    const isAdmin=state.authMode==='admin';
@@ -152,11 +160,11 @@
    try{
      const credentials=isAdmin
        ? {email:$('adminEmail').value.trim().toLowerCase(),password}
-       : {phone:phoneE164($('phone').value),password};
+       : {email:internalStaffEmail($('phone').value),password};
      if(isAdmin && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)){
        throw Error('請輸入有效的管理員 Email');
      }
-     // Preserve Supabase Auth error code, otherwise phone-provider errors look like wrong passwords.
+     // Supabase Email/Password checks the internal alias, not the disabled Phone provider.
      const result=await state.db.auth.signInWithPassword(credentials);
      if(result.error)throw result.error;
      $('password').value='';
@@ -165,11 +173,12 @@
      const code=String(error?.code||'').toLowerCase();
      const message=String(error?.message||'').toLowerCase();
      if(!isAdmin && (code==='phone_provider_disabled'||message.includes('phone logins are disabled'))){
-       authMessage('目前 Supabase 專案尚未啟用「Phone 手機登入」。這不是密碼錯誤；請管理員到 Supabase → Authentication → Sign In / Providers 啟用 Phone。',true);
+       authMessage('手機登入已停用。請管理員確認員工帳號已轉換為內部 Email 登入，不需要設定 Twilio。',true);
      }else if(code==='over_request_rate_limit'||error?.status===429){
        authMessage('登入嘗試過於頻繁，請稍後再試，不要連續重複輸入。',true);
      }else{
-       authMessage('登入失敗，請確認'+(isAdmin?'管理員 Email':'手機號碼')+'與密碼是否正確。',true);
+       authMessage('登入失敗，請確認'+(isAdmin?'管理員 Email':'手機號碼')+'與密碼是否正確。'+
+         (isAdmin?'':'若剛完成改版，請先請管理員確認已完成原員工帳號轉換。'),true);
      }
    }finally{setBusy(form,false)}
  }
@@ -658,7 +667,7 @@
  async function loadAdmin(){
    if(!canAdmin())return;
    const [p,a]=await Promise.all([
-     state.db.from('profiles').select('id,display_name,role,active,must_change_password,created_at').order('created_at',{ascending:false}),
+     state.db.from('profiles').select('id,display_name,role,active,must_change_password,login_phone,created_at').order('created_at',{ascending:false}),
      state.db.from('case_assignments').select('case_id,user_id,created_at').order('created_at',{ascending:false})
    ]);
    state.profiles=await checkQuery(p,'取得帳號清單');
@@ -668,12 +677,49 @@
    $('adminActiveUsers').textContent=String(state.profiles.filter(p=>p.active).length);
    $('adminTotalCases').textContent=String(state.cases.length);
    renderUsers();renderAssignControls();
+   checkStaffLoginMigration().catch(e=>notify('登入轉換狀態檢查失敗：'+errText(e),true));
+ }
+ async function checkStaffLoginMigration(){
+   if(!canAdmin() || !state.db)return;
+   const label=$('loginMigrationStatus'),refresh=$('checkLoginMigration');
+   refresh.disabled=true;label.classList.remove('error');
+   try{
+     const d=await invokeAdminUser({action:'migration_status'});
+     state.loginMigration=d;
+     label.textContent='員工帳號共 '+d.total+' 位；已轉換 '+d.converted+' 位，待轉換 '+d.pending+' 位'+
+       (d.errors?'，需人工查核 '+d.errors+' 位':'')+
+       (d.pilot?'。建議先測試：'+d.pilot.name+'（手機末四碼 '+d.pilot.last4+'）。':'。');
+     $('pilotLoginMigration').disabled=!d.pending||!!d.errors;
+     $('migrateRemainingLogins').disabled=!d.pending||!!d.errors||d.converted<1;
+   }catch(e){
+     label.textContent='查詢失敗：'+errText(e);label.classList.add('error');
+     $('pilotLoginMigration').disabled=true;$('migrateRemainingLogins').disabled=true;
+     throw e;
+   }finally{refresh.disabled=false}
+ }
+ async function migrateStaffLogins(pilot){
+   if(!canAdmin() || !state.db)return;
+   const btn=$(pilot?'pilotLoginMigration':'migrateRemainingLogins');
+   if(!pilot && !state.loginMigration?.converted){
+     notify('請先轉換 1 位測試帳號並驗證原密碼可以登入。',true);return;
+   }
+   const question=pilot
+     ? '將先轉換 1 位員工的登入方式（不更改 ID、密碼或指派）。轉換後，需請該員工實測登入。確定執行？'
+     : '請確認已用測試員工的原手機與原密碼成功登入！要將剩餘員工帳號轉換為免簡訊登入嗎？';
+   if(!window.confirm(question))return;
+   btn.disabled=true;
+   try{
+     const d=await invokeAdminUser({action:'migrate_logins',pilot,confirm:'轉換員工登入'});
+     notify(d.message+'；本次完成 '+d.changed+' 位。'+(pilot?'請先讓該員工實測登入。':''));
+   }catch(e){notify('登入方式轉換未完成：'+errText(e),true)}
+   finally{await checkStaffLoginMigration().catch(()=>{});}
  }
  function renderUsers(){
    const query=$('adminUserSearch').value.trim().toLocaleLowerCase('zh-TW');
    const roleFilter=$('adminUserRoleFilter').value;
    const shown=state.profiles.filter(p=>{
-     const matchName=String(p.display_name||'').toLocaleLowerCase('zh-TW').includes(query);
+     const localPhone=p.login_phone && /^8869\d{8}$/.test(p.login_phone)?'0'+p.login_phone.slice(3):'';
+     const matchName=String(p.display_name||'').toLocaleLowerCase('zh-TW').includes(query)||localPhone.includes(query);
      const matchRole=roleFilter==='all'||p.role===roleFilter;
      return matchName&&matchRole;
    });
@@ -688,8 +734,9 @@
        ? '<button type="button" class="btn warn" data-delete-profile="'+esc(p.id)+'">刪除使用者</button>' : '';
      const avatar=String(p.display_name||'?').trim().slice(0,1)||'?';
      const meta=self?'<span class="pill ok staff-self">自己</span>':'<span class="staff-role-small">'+esc(roles[p.role]||p.role)+'</span>';
+     const staffPhone=p.login_phone && /^8869\d{8}$/.test(p.login_phone)?'0'+p.login_phone.slice(3):'';
      return '<tr class="staff-row">'+
-       '<td data-label="使用者"><div class="staff-person"><span class="staff-avatar" aria-hidden="true">'+esc(avatar)+'</span><div class="staff-person-copy"><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><div class="staff-subline">'+meta+'<span>'+esc(p.id.slice(0,8))+'…</span></div></div></div></td>'+
+       '<td data-label="使用者"><div class="staff-person"><span class="staff-avatar" aria-hidden="true">'+esc(avatar)+'</span><div class="staff-person-copy"><input type="text" data-display-name="'+esc(p.id)+'" aria-label="員工姓名" maxlength="80" value="'+esc(p.display_name)+'" '+(self?'disabled':'')+'><div class="staff-subline">'+meta+(staffPhone?'<span>登入：'+esc(staffPhone)+'</span>':'')+'<span>'+esc(p.id.slice(0,8))+'…</span></div></div></div></td>'+
        '<td data-label="帳號角色" class="staff-role-col"><select aria-label="'+esc(p.display_name)+'的角色" data-role="'+esc(p.id)+'" '+(self?'disabled':'')+'>'+options+'</select></td>'+
        '<td data-label="使用狀態"><label class="staff-state"><input type="checkbox" aria-label="啟用 '+esc(p.display_name)+'" data-active="'+esc(p.id)+'" '+(p.active?'checked':'')+' '+(self?'disabled':'')+'><span>'+(p.active?'已啟用':'已停用')+'</span></label></td>'+
        '<td data-label="管理操作"><div class="staff-actions"><button type="button" class="btn alt" data-save-profile="'+esc(p.id)+'" '+(self?'disabled':'')+'>儲存</button>'+reset+remove+'</div></td>'+
