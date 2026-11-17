@@ -672,7 +672,6 @@
      '<span class="care-case-hint">已指派的人員可共同交班</span></div>'+
      '<div class="care-tabs" role="tablist" aria-label="個案交班功能">'+
        '<button class="care-tab active" data-care-tab="guide" role="tab" aria-selected="true" type="button">照顧檔案</button>'+
-       '<button class="care-tab" data-care-tab="discussion" role="tab" aria-selected="false" type="button">交班討論</button>'+
        '<button class="care-tab" data-care-tab="rooms" role="tab" aria-selected="false" type="button">48 小時臨時交班室</button>'+
        '<button class="care-tab" data-care-tab="history" role="tab" aria-selected="false" type="button">正式交班 <span class="care-tab-count">'+rec.length+'</span></button>'+
      '</div>'+
@@ -688,19 +687,6 @@
            '<div class="care-form-actions"><button class="btn alt" id="guideCancelBtn" type="button">取消</button><button class="btn" id="guideSaveBtn" type="submit">提交重點給居督確認</button></div>'+
          '</form></section>'+
      '</section>'+
-     '<section data-care-panel="discussion" id="careDiscussionPanel" class="care-tab-panel" hidden>'+
-       '<div class="care-section-head"><div><h3>個案交班討論 <span class="care-count" id="discussionCount">0 則討論</span></h3><p>向同一個案的已指派同仁發問或回覆；原始對話會保留，後續代班者可查閱。</p></div><button class="btn alt care-mini" id="refreshDiscussionBtn" type="button">↻ 更新對話</button></div>'+
-       '<div class="care-urgent-note">注意：急迫異常、跌倒受傷或服務安全事件，仍須依機構規定立即聯絡督導，不得僅在討論區留言。</div>'+
-       '<div id="careDiscussionList" class="care-discussion-list"><p class="care-empty">正在載入討論…</p></div>'+
-       '<form id="careDiscussionForm" class="care-chat-form">'+
-         '<h4>新增交班討論</h4><div id="discussionReply" class="care-reply-quote" hidden></div>'+
-         '<div class="split"><div class="field"><label for="discussionType">訊息類型</label><select id="discussionType"><option>問題</option><option>回覆</option><option>補充</option></select></div>'+
-         '<div class="field care-reply-cancel"><label>回覆設定</label><button class="btn alt" id="discussionCancelReply" type="button">取消指定回覆</button></div></div>'+
-         '<div class="field"><label for="discussionBody">交班內容</label><textarea id="discussionBody" minlength="2" maxlength="3000" rows="4" required placeholder="例如：明天代班想確認個案沐浴時是否需要使用防滑椅？"></textarea></div>'+
-         '<div id="discussionNotice" class="care-notice" role="status" hidden></div>'+
-         '<div class="care-form-actions"><span class="help">討論內容不會自動變成正式照顧指示。</span><button class="btn" id="discussionSendBtn" type="submit">送出討論</button></div>'+
-       '</form>'+
-     '</section>'+
      '<section data-care-panel="rooms" class="care-tab-panel" id="tempRoomsPanel" hidden><div id="tempRoomRoot"></div></section>'+
      '<section data-care-panel="history" class="care-tab-panel" hidden>'+
        '<div class="toolbar care-history-header"><div><h3>正式交班歷史（'+rec.length+' 筆）</h3><p class="help">按建立時間排序；原始紀錄保留，不允許一般使用者任意編輯或刪除。</p></div>'+
@@ -713,7 +699,7 @@
    $('newHandoverBtn').addEventListener('click',openHandover);
    if($('readCaseBtn'))$('readCaseBtn').addEventListener('click',markRead);
    if(window.CareCollab){
-      window.CareCollab.mount({db:state.db,caseId:c.id,profile:state.profile,focus:c.focus,note:c.note}).catch(e=>notify('載入交班討論失敗：'+errText(e),true));
+      window.CareCollab.mount({db:state.db,caseId:c.id,profile:state.profile,focus:c.focus,note:c.note}).catch(e=>notify('載入照顧重點失敗：'+errText(e),true));
    }
    if(window.HandoverRooms){
       window.HandoverRooms.mount({db:state.db,caseId:c.id,profile:state.profile,user:state.user,onPublished:()=>refreshDashboard(false)})
