@@ -68,6 +68,10 @@
    $('checkLoginMigration').addEventListener('click',checkStaffLoginMigration);
    $('pilotLoginMigration').addEventListener('click',()=>migrateStaffLogins(true));
    $('migrateRemainingLogins').addEventListener('click',()=>migrateStaffLogins(false));
+   $('confirmPilotLogin').addEventListener('change',()=>{
+     const d=state.loginMigration;
+     $('migrateRemainingLogins').disabled=!$('confirmPilotLogin').checked||!d?.pending||!!d?.errors||d.converted<1;
+   });
    $('refreshBtn').addEventListener('click',()=>refreshDashboard());
    $('caseSearch').addEventListener('input',()=>{state.casePage=1;renderCaseList()});
    $('caseFilter').addEventListener('change',value=>{state.caseFilter=$('caseFilter').value;state.casePage=1;renderCaseList()});
@@ -688,9 +692,9 @@
      state.loginMigration=d;
      label.textContent='員工帳號共 '+d.total+' 位；已轉換 '+d.converted+' 位，待轉換 '+d.pending+' 位'+
        (d.errors?'，需人工查核 '+d.errors+' 位':'')+
-       (d.pilot?'。建議先測試：'+d.pilot.name+'（手機末四碼 '+d.pilot.last4+'）。':'。');
+       (d.pilot?'。下一位待轉換：'+d.pilot.name+'（手機末四碼 '+d.pilot.last4+'）。':'。');
      $('pilotLoginMigration').disabled=!d.pending||!!d.errors;
-     $('migrateRemainingLogins').disabled=!d.pending||!!d.errors||d.converted<1;
+     $('migrateRemainingLogins').disabled=!d.pending||!!d.errors||d.converted<1||!$('confirmPilotLogin').checked;
    }catch(e){
      label.textContent='查詢失敗：'+errText(e);label.classList.add('error');
      $('pilotLoginMigration').disabled=true;$('migrateRemainingLogins').disabled=true;
@@ -700,8 +704,8 @@
  async function migrateStaffLogins(pilot){
    if(!canAdmin() || !state.db)return;
    const btn=$(pilot?'pilotLoginMigration':'migrateRemainingLogins');
-   if(!pilot && !state.loginMigration?.converted){
-     notify('請先轉換 1 位測試帳號並驗證原密碼可以登入。',true);return;
+   if(!pilot && (!state.loginMigration?.converted || !$('confirmPilotLogin').checked)){
+     notify('請先完成一位試點轉換，並勾選「已確認試點員工可以使用原密碼登入」。',true);return;
    }
    const question=pilot
      ? '將先轉換 1 位員工的登入方式（不更改 ID、密碼或指派）。轉換後，需請該員工實測登入。確定執行？'
@@ -710,7 +714,9 @@
    btn.disabled=true;
    try{
      const d=await invokeAdminUser({action:'migrate_logins',pilot,confirm:'轉換員工登入'});
-     notify(d.message+'；本次完成 '+d.changed+' 位。'+(pilot?'請先讓該員工實測登入。':''));
+     if(pilot)$('confirmPilotLogin').checked=false;
+     notify(d.message+'；本次完成 '+d.changed+' 位。'+
+       (pilot&&d.test_user?'請讓「'+d.test_user.name+'」（手機末四碼 '+d.test_user.last4+'）使用原密碼登入。':''));
    }catch(e){notify('登入方式轉換未完成：'+errText(e),true)}
    finally{await checkStaffLoginMigration().catch(()=>{});}
  }
