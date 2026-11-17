@@ -467,6 +467,7 @@
      $('identity').textContent=state.profile.display_name+'｜'+(roles[state.profile.role]||state.profile.role);
      $('adminTab').hidden=!canAdmin();
      $('teamPointsTab').hidden=!['admin','supervisor'].includes(state.profile.role);
+     if($('teamPointsTab').hidden)window.TeamPoints?.destroy();
      await refreshDashboard(false);show('appScreen');
      chooseTab('cases');
    }catch(e){notify(errText(e),true);show('authScreen')}
