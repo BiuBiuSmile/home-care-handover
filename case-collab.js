@@ -8,7 +8,6 @@
   const $=id=>document.getElementById(id);
   const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const fmt=value=>value?new Date(value).toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'';
-  const categories=['生活習慣','備餐與飲食','移位與安全','沐浴清潔','溝通與家屬','其他'];
   const state={db:null,caseId:null,profile:null,guide:[],focus:[],note:'',messages:[],replyTo:null,loadId:0,timer:null,panel:'guide',loaded:false};
   function setNotice(text,isError=false,section='guide'){
     const e=$(section==='guide'?'guideNotice':'discussionNotice');
@@ -46,11 +45,12 @@
         ? '<div class="care-review-actions"><button class="btn care-mini" data-guide-review="'+esc(item.id)+'" data-guide-status="approved" type="button">✓ 確認</button>'+
             '<button class="btn alt care-mini" data-guide-review="'+esc(item.id)+'" data-guide-status="rejected" type="button">退回</button></div>'
         : '';
+      const simple=item.category==='其他'&&item.title==='照顧重點';
       return '<article class="care-entry care-entry--'+cls+'">'+
         '<div class="care-entry-header"><div class="care-tags"><span class="care-status-tag '+cls+'">'+status+'</span>'+
-        '<span class="care-category">'+esc(item.category)+'</span></div>'+
+        (simple?'':'<span class="care-category">'+esc(item.category)+'</span>')+'</div>'+
         '<time class="care-entry-date">'+fmt(item.created_at)+'</time></div>'+
-        '<h4>'+esc(item.title)+'</h4><p>'+esc(item.detail)+'</p>'+
+        (simple?'':'<h4>'+esc(item.title)+'</h4>')+'<p>'+esc(item.detail)+'</p>'+
         '<div class="care-entry-footer"><span>提交：'+esc(item.author_name)+'</span>'+controls+'</div>'+
         '</article>';
     };
@@ -71,7 +71,7 @@
     panel.hidden=!show;
     button.setAttribute('aria-expanded',String(show));
     button.classList.toggle('active',show);
-    if(show&&focus){panel.scrollIntoView({behavior:'smooth',block:'nearest'});$('guideTitle')?.focus();}
+    if(show&&focus){panel.scrollIntoView({behavior:'smooth',block:'nearest'});$('guideDetail')?.focus();}
   }
   function renderGuide(){
     const root=$('careGuideResults');if(!root)return;
@@ -142,11 +142,12 @@
   async function submitGuide(e){
     e.preventDefault();
     const caseId=state.caseId;
-    const category=$('guideCategory').value;
-    const title=$('guideTitle').value.trim();
+    // 沿用原資料庫必填欄位，但使用者只需填寫照顧重點內容。
+    const category='其他';
+    const title='照顧重點';
     const detail=$('guideDetail').value.trim();
-    if(!categories.includes(category)||title.length<2||title.length>100||detail.length<5||detail.length>2000){
-      return setNotice('請填寫至少 2 字的標題與至少 5 字的照顧重點（不得超過欄位上限）',true);
+    if(detail.length<5||detail.length>2000){
+      return setNotice('請填寫 5～2000 字的照顧重點與注意事項。',true);
     }
     const btn=$('guideSaveBtn');btn.disabled=true;
     try{
@@ -202,12 +203,10 @@
     if(!m)return;
     changeTab('guide');
     showGuideEditor(true);
-    $('guideCategory').value='其他';
-    $('guideTitle').value=('討論整理：'+m.body.split(/[\n。？！]/)[0]).slice(0,100);
     $('guideDetail').value=m.body.slice(0,2000);
     setNotice('已將討論內容填入照顧重點草稿。請先確認內容，再送出給居督審核。');
-    $('guideTitle').scrollIntoView({behavior:'smooth',block:'center'});
-    $('guideTitle').focus();
+    $('guideDetail').scrollIntoView({behavior:'smooth',block:'center'});
+    $('guideDetail').focus();
   }
   function bind(){
     $('guideAddBtn').addEventListener('click',()=>showGuideEditor($('careGuideEditor').hidden,true));

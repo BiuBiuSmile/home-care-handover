@@ -684,8 +684,6 @@
        '<div id="careGuideResults"><p class="care-empty">正在載入照顧重點…</p></div>'+
        '<section class="care-input-panel" id="careGuideEditor" hidden><h3>新增照顧重點</h3><p class="help">已指派的居服員可提出照顧建議，經居督或管理員審核後才列入正式參考。</p>'+
          '<form id="careGuideForm">'+
-           '<div class="split"><div class="field"><label for="guideCategory">重點類別</label><select id="guideCategory" required><option>生活習慣</option><option>備餐與飲食</option><option>移位與安全</option><option>沐浴清潔</option><option>溝通與家屬</option><option>其他</option></select></div>'+
-           '<div class="field"><label for="guideTitle">重點標題</label><input id="guideTitle" required minlength="2" maxlength="100" placeholder="例如：洗澡前先確認防滑椅"></div></div>'+
            '<div class="field"><label for="guideDetail">具體照顧方式與注意事項</label><textarea id="guideDetail" required minlength="5" maxlength="2000" rows="4" placeholder="描述已確認的照顧習慣與注意事項。請只填必要資訊，不輸入身分證、電話等非必要個資。"></textarea></div>'+
            '<div class="care-form-actions"><button class="btn alt" id="guideCancelBtn" type="button">取消</button><button class="btn" id="guideSaveBtn" type="submit">提交重點給居督確認</button></div>'+
          '</form></section>'+
