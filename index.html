@@ -214,6 +214,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 @media(max-width:600px){.staff-login-migration{padding:15px}.staff-login-migration-actions{flex-direction:column}.staff-login-migration-actions button{width:100%}}
 
 </style>
+<link rel="stylesheet" href="./team-points.css?v=1">
 <link rel="stylesheet" href="./rewards.css?v=1">
 </head>
 <body>
@@ -270,7 +271,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <section id="appScreen" hidden>
  <header class="topbar"><div class="brand"><span class="logo">護</span> <div>安護交班<div><small>個案交班資訊中心</small></div></div></div><div class="action-inline"><span id="identity"></span><button class="btn" type="button" id="logoutBtn">登出</button></div></header>
  <main class="page">
-  <div class="navtabs"><button class="active" type="button" id="casesTab">交班工作台</button><button type="button" id="adminTab" hidden>管理員後台</button><button type="button" id="rewardsTab">點數獎勵</button></div>
+  <div class="navtabs"><button class="active" type="button" id="casesTab">交班工作台</button><button type="button" id="adminTab" hidden>管理員後台</button><button type="button" id="rewardsTab">點數獎勵</button><button type="button" id="teamPointsTab" hidden>全員點數</button></div>
   <section id="casesPage">
    <section id="tempInboxPanel" class="panel temp-inbox-panel" hidden aria-label="收到的臨時交班邀請">
     <div class="temp-inbox-head"><div><h2>受邀臨時交班</h2><p>搜尋你收到邀請的個案，直接進入 A 建立的 48 小時交班室，無須等待居督指派。</p></div><span id="tempInboxCount" class="temp-pill live">0 間進行中</span></div>
@@ -315,6 +316,9 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   <section id="rewardsPage" hidden>
    <div id="rewardsRoot" class="rewards-root"><div class="reward-empty">載入點數資訊中…</div></div>
   </section>
+  <section id="teamPointsPage" hidden>
+    <div id="teamPointsRoot" class="tp-root"><div class="tp-no-results">載入全員點數中…</div></div>
+  </section>
   <section id="adminPage" hidden>
    <div class="admin-shell">
     <header class="admin-hero">
@@ -340,17 +344,25 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
      <section class="panel admin-panel" id="adminUsersSection">
       <div class="admin-section-header">
        <div class="admin-section-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 10h5M19.5 7.5v5"/></svg></div>
-       <div class="admin-section-text"><span class="admin-section-kicker">01 / 員工權限</span><h2>帳號與權限管理</h2><p>查看使用者、設定角色與啟用狀態。重設密碼或刪除帳號需管理員授權。</p></div>
+       <div class="admin-section-text"><span class="admin-section-kicker">01 / 員工權限</span><h2>帳號與權限管理</h2><p>員工帳號、角色、使用狀態與可用點數集中管理。點數明細可直接點選查看。</p></div>
        <button class="btn alt admin-head-action" type="button" id="reloadAdmin"><span aria-hidden="true">↻</span> 重新整理</button>
+      </div>
+      <div class="admin-users-kpis" aria-label="員工與點數統計">
+        <div class="admin-users-kpi"><span>帳號總數</span><strong id="adminUsersCount">—</strong></div>
+        <div class="admin-users-kpi"><span>已啟用帳號</span><strong id="adminUsersActive">—</strong></div>
+        <div class="admin-users-kpi"><span>居服員</span><strong id="adminUsersStaff">—</strong></div>
+        <div class="admin-users-kpi"><span>居督／管理員</span><strong id="adminUsersLeaders">—</strong></div>
+        <div class="admin-users-kpi admin-users-kpi-points"><span>全體可用點數</span><strong id="adminUsersPoints">—</strong><small>核發與兌換後餘額</small></div>
       </div>
       <div class="admin-user-toolbar">
        <label class="admin-search"><span class="visually-hidden">搜尋帳號姓名</span><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="adminUserSearch" type="search" placeholder="搜尋員工姓名…" autocomplete="off"></label>
        <label class="admin-compact-filter"><span>篩選角色</span><select id="adminUserRoleFilter"><option value="all">全部角色</option><option value="staff">居服員</option><option value="supervisor">居督</option><option value="admin">管理員</option></select></label>
+       <label class="admin-compact-filter"><span>排序方式</span><select id="adminUserSort"><option value="name">姓名</option><option value="points_desc">點數高到低</option><option value="points_asc">點數低到高</option><option value="role">角色</option></select></label>
        <span class="admin-count" id="adminUserSummary" aria-live="polite">正在載入帳號…</span>
       </div>
       <div class="staff-table-shell">
        <table class="staff-table">
-        <thead><tr><th scope="col">使用者</th><th scope="col">帳號角色</th><th scope="col">使用狀態</th><th scope="col">管理操作</th></tr></thead>
+        <thead><tr><th scope="col">員工資料</th><th scope="col">帳號角色</th><th scope="col">使用狀態</th><th scope="col">可用點數</th><th scope="col">管理操作</th></tr></thead>
         <tbody id="usersBody"></tbody>
        </table>
       </div>
@@ -494,12 +506,21 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
  </section>
 </div>
 <div id="handoverLayer" class="dialog-layer" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="handoverTitle"><h2 id="handoverTitle">新增交班紀錄</h2><p class="help">紀錄會保存在個案歷程中，只有已授權人員可以查閱。重大異常仍須立即通知督導。</p><form id="handoverForm"><div class="split"><div class="field"><label for="recordKind">交班類型</label><select id="recordKind" required><option>日常照顧</option><option>環境與安全</option><option>生活習慣</option><option>家屬溝通</option><option>異常狀況</option><option>服務調整</option></select></div><div class="field"><label for="recordRisk">重要程度</label><select id="recordRisk" required><option>一般</option><option>提醒</option><option>緊急</option></select></div></div><div class="field"><label for="recordSummary">交班主旨</label><input id="recordSummary" maxlength="100" required></div><div class="field"><label for="recordDescription">交班內容與下次注意事項</label><textarea id="recordDescription" maxlength="2000" minlength="8" required></textarea></div><div class="field"><label for="recordExpires">提醒有效期限（可空白）</label><input id="recordExpires" type="date"></div><label class="help"><input type="checkbox" id="urgentAck" style="min-height:18px;width:18px;vertical-align:middle"> 如屬重大異常，已依機構規定即時通知督導</label><footer><button type="button" class="btn alt" id="cancelRecord">取消</button><button type="submit" class="btn" id="submitRecord">儲存交班</button></footer></form></section></div>
+<div id="teamPointsDetailLayer" class="tp-detail-layer" role="dialog" aria-modal="true" aria-labelledby="teamPointsDetailTitle" hidden>
+ <section class="tp-detail-card">
+  <div class="tp-detail-top"><div><small id="teamPointsDetailMeta">員工點數明細</small><h2 id="teamPointsDetailTitle">點數明細</h2></div>
+   <button id="closeTeamPointsDetails" type="button" class="tp-detail-close" aria-label="關閉點數明細">×</button></div>
+  <div class="tp-detail-balance"><span>目前可用點數</span><strong id="teamPointsDetailBalance">—</strong></div>
+  <div id="teamPointsDetailEvents" class="tp-detail-events"></div>
+ </section>
+</div>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="./case-collab.js?v=20261117-rewards" defer></script>
 <script src="./handover-rooms.js?v=20261117-rewards" defer></script>
 <script src="./rewards.js?v=1" defer></script>
-<script src="./portal.js?v=20261117-rewards-v1" defer></script>
+<script src="./team-points.js?v=1" defer></script>
+<script src="./portal.js?v=20261117-team-points" defer></script>
 </body>
 </html>
