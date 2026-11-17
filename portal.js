@@ -932,7 +932,22 @@
  }
  function renderAssignControls(){
    const current=$('assignCase').value;
-   $('assignCase').innerHTML=state.cases.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.id)+'｜'+esc(c.name)+'</option>').join('');
+   // 顯示真正由個案服務人員指派建立的居服員，不以個案基本資料上的主責姓名當作權限。
+   const profileById=new Map(state.profiles.map(p=>[p.id,p]));
+   const caregiverByCase=new Map();
+   for(const assignment of state.assignments){
+     const profile=profileById.get(assignment.user_id);
+     if(!profile||profile.role!=='staff')continue;
+     if(!caregiverByCase.has(assignment.case_id))caregiverByCase.set(assignment.case_id,new Map());
+     const display=(profile.display_name||'未設定姓名')+(profile.active?'':'（已停用）');
+     caregiverByCase.get(assignment.case_id).set(profile.id,display);
+   }
+   $('assignCase').innerHTML=state.cases.map(c=>{
+     const names=[...(caregiverByCase.get(c.id)?.values()||[])];
+     const assigned=names.length===0?'尚未指派':names.length<=2?names.join('、'):
+       names.slice(0,2).join('、')+' 等 '+names.length+' 位';
+     return '<option value="'+esc(c.id)+'">'+esc(c.id)+'｜'+esc(c.name)+'｜居服員：'+esc(assigned)+'</option>';
+   }).join('');
    if(state.cases.some(x=>x.id===current))$('assignCase').value=current;
    $('assignUser').innerHTML=state.profiles.filter(p=>p.active).map(p=>'<option value="'+esc(p.id)+'">'+esc(p.display_name)+'｜'+(roles[p.role]||p.role)+'</option>').join('');
    renderAssignedList();
