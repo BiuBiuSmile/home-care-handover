@@ -88,6 +88,8 @@
    $('caseForm').addEventListener('submit',saveCase);
    $('clearCaseBtn').addEventListener('click',clearCaseForm);
    $('assignForm').addEventListener('submit',saveAssignment);
+   $('previewPrimarySync').addEventListener('click',previewPrimaryAssignments);
+   $('applyPrimarySync').addEventListener('click',applyPrimaryAssignments);
    $('assignCase').addEventListener('change',renderAssignedList);
    $('usersBody').addEventListener('change',e=>{
      const checkbox=e.target.closest('input[data-active]');
@@ -681,6 +683,8 @@
    $('adminActiveUsers').textContent=String(state.profiles.filter(p=>p.active).length);
    $('adminTotalCases').textContent=String(state.cases.length);
    renderUsers();renderAssignControls();
+   state.primarySyncPreview=null;
+   $('applyPrimarySync').disabled=true;
    checkStaffLoginMigration().catch(e=>notify('登入轉換狀態檢查失敗：'+errText(e),true));
  }
  async function checkStaffLoginMigration(){
@@ -811,6 +815,44 @@
      editBtn=document.createElement('button');editBtn.type='button';editBtn.className='btn alt';editBtn.id='editCaseChoice';editBtn.style.marginLeft='8px';editBtn.textContent='編輯所選個案';
      $('assignForm').querySelector('button[type="submit"]').after(editBtn);
      editBtn.addEventListener('click',()=>editCase($('assignCase').value));
+   }
+ }
+ async function previewPrimaryAssignments(){
+   if(!canAdmin()||!state.db)return;
+   const button=$('previewPrimarySync'),apply=$('applyPrimarySync'),label=$('primarySyncStatus');
+   button.disabled=true;apply.disabled=true;state.primarySyncPreview=null;
+   label.classList.remove('error');label.textContent='正在核對主責姓名與既有指派…';
+   try{
+     const data=await invokeAdminUser({action:'primary_assignment_preview'});
+     state.primarySyncPreview=data;
+     label.textContent='共有 '+data.cases+' 位個案；已正確指派 '+data.already_assigned+
+       ' 位，可安全新增 '+data.pending+' 筆，須人工核對 '+data.conflicts+' 筆衝突、'+
+       data.no_matching_worker+' 筆姓名未對應、'+data.ambiguous_worker+' 筆同名、'+
+       data.blank_names+' 筆未填主責。';
+     apply.disabled=!data.pending||!data.preview_token;
+   }catch(e){
+     label.textContent='核對失敗：'+errText(e);label.classList.add('error');
+     notify('無法預覽主責指派：'+errText(e),true);
+   }finally{button.disabled=false}
+ }
+ async function applyPrimaryAssignments(){
+   if(!canAdmin()||!state.db||!state.primarySyncPreview?.pending)return;
+   const preview=state.primarySyncPreview;
+   if(!window.confirm('確定依照主責姓名完全相同、無其他居服員指派衝突的規則，新增 '+preview.pending+
+     ' 筆正式個案查閱權限嗎？已指派的權限不會移除；姓名不符的個案不會處理。'))return;
+   const button=$('applyPrimarySync');button.disabled=true;
+   try{
+     const result=await invokeAdminUser({
+       action:'primary_assignment_sync',
+       confirm:'同步主責指派',
+       preview_token:preview.preview_token
+     });
+     notify('已建立 '+result.created+' 筆主責個案指派。其他不符合條件的個案未變動。');
+     await loadAdmin();
+     await previewPrimaryAssignments();
+   }catch(e){
+     notify('主責指派未完成：'+errText(e),true);
+     await previewPrimaryAssignments();
    }
  }
  function renderAssignedList(){
