@@ -13,6 +13,9 @@
  function stop(){state.seq++;state.db=null;state.user=null;state.profile=null;state.badges=[];state.mine=[];state.progress=[];state.cases=[];state.people=[];state.evidence=[];state.lastUser=null;state.busy=false;}
  function awardImage(b,won){
    const idx=sprites.indexOf(b.code);
+   // 原本兩枚 Emoji 徽章也使用小尺寸固定位置的動態盾牌，保留既有解鎖資料。
+   const originalTwo={handover_star:0,care_sharer:1}[b.code];
+   if(originalTwo!==undefined)return '<span role="img" aria-label="'+esc(b.title)+'動畫徽章" class="badge-v3-image badge-v3-original-two badge-v3-original-two-'+originalTwo+(won?'':' is-locked')+'"></span>';
    if(b.code==='mentor')return '<span role="img" aria-label="'+esc(b.title)+'動畫徽章" class="badge-v3-image badge-v3-mentor'+(won?'':' is-locked')+'"></span>';
    if(idx<0)return '<span class="badge-v3-legacy" aria-hidden="true">'+esc(b.icon||'🏅')+'</span>';
    return '<span role="img" aria-label="'+esc(b.title)+'動畫徽章" class="badge-v3-image badge-v3-image-'+idx+(won?'':' is-locked')+'">'+

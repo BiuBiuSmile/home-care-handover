@@ -48,3 +48,19 @@
     background-image:url('./assets/badges/newcomer-mentor-fixed-static.webp?v=20261117');
   }
 }
+
+/* 原有兩款徽章：金色盾牌常駐原位，只有圖片內星光閃動。兩格橫向精靈圖，無 CSS 位移或縮放。 */
+.badge-v3-image.badge-v3-original-two{
+  background-image:url('./assets/badges/achievement-original-two-v5.webp?v=20261117');
+  background-size:192px 96px;
+  background-repeat:no-repeat;
+  animation:none;
+  transform:none;
+}
+.badge-v3-image.badge-v3-original-two-0{background-position:0 0}
+.badge-v3-image.badge-v3-original-two-1{background-position:-96px 0}
+@media(prefers-reduced-motion:reduce){
+  .badge-v3-image.badge-v3-original-two{
+    background-image:url('./assets/badges/achievement-original-two-v5-static.webp?v=20261117');
+  }
+}

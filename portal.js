@@ -431,6 +431,7 @@
  async function setSession(session){
    if(state.recoveryActive)return;
    if(!session?.user){
+     state.tab='cases';
      window.CareCollab?.destroy();
      window.HandoverRooms?.destroy();
      window.HandoverRooms?.clearInbox();
@@ -443,6 +444,7 @@
      show('authScreen');return;
    }
    if(state.user?.id!==session.user.id){
+     state.tab='cases';
      window.CareCollab?.destroy();
      window.HandoverRooms?.destroy();
      window.HandoverRooms?.clearInbox();
@@ -486,14 +488,15 @@
      $('teamPointsTab').hidden=!['admin','supervisor'].includes(state.profile.role);
      if($('teamPointsTab').hidden)window.TeamPoints?.destroy();
      await refreshDashboard(false);show('appScreen');
-     chooseTab('cases');
+     // 身分、Token 與資料重新載入時保留使用者目前分頁；只在登出／換帳號才回到工作台。
+     chooseTab(state.tab);
    }catch(e){notify(errText(e),true);show('authScreen')}
  }
  async function logout(){
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.HandoverPhotos?.destroy();window.Rewards?.destroy();window.TeamPoints?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {state.tab='cases';window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.HandoverPhotos?.destroy();window.Rewards?.destroy();window.TeamPoints?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
    if(!['cases','admin','rewards','teamPoints'].includes(tab))return;
