@@ -1,0 +1,57 @@
+/* 大安心交班：交班提醒、居督審核、手機操作與雲端草稿 */
+.enh-card{margin:14px 0 18px;padding:18px;background:#fff;border:1px solid #dce6e8;border-radius:16px;box-shadow:0 4px 16px rgba(22,52,64,.045)}
+.enh-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:13px}
+.enh-head h2{margin:0;color:#184356;font-size:18px;line-height:1.5}
+.enh-head p{font-size:12px;line-height:1.7;color:#6c818a;margin:5px 0 0}
+.enh-count{display:inline-flex;align-items:center;justify-content:center;padding:2px 8px;border-radius:99px;background:#e7f5ee;color:#176651;font-size:11px;font-weight:800;vertical-align:middle}
+.enh-mini{font-size:12px!important;padding:8px 12px!important;min-height:36px!important;white-space:normal}
+.enh-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.enh-alert{min-width:0;display:flex;flex-direction:column;gap:5px;text-align:left;background:#f6faf9;color:#245363;border:1px solid #deeeeb;border-radius:12px;padding:12px;cursor:pointer}
+.enh-alert:hover,.enh-alert:focus-visible{border-color:#45b0a1;outline:2px solid transparent;box-shadow:0 0 0 2px #a0dbd0}
+.enh-alert.critical{border-color:#edb7a2;background:#fff4ef}
+.enh-alert strong{line-height:1.5;overflow-wrap:anywhere;font-size:13px}
+.enh-alert-name,.enh-alert small{font-size:11px;color:#647f86}
+.enh-caution{background:#fff3ea;border:1px solid #f5ccb0;color:#925530;padding:10px 12px;border-radius:10px;font-size:12px}
+.enh-empty{font-size:12px;color:#7d8e94;padding:10px 0;margin:0}
+.enh-review-columns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;align-items:start}
+.enh-review-section{border:1px solid #e1e9ed;border-radius:13px;padding:12px;background:#f8fbfc;min-width:0}
+.enh-review-section h3{font-size:14px;color:#235060;margin:0 0 12px}
+.enh-review-item{border:1px solid #e3e9e9;border-radius:10px;background:#fff;padding:12px;margin-bottom:9px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.enh-review-item strong{font-size:13px;color:#1c4654;line-height:1.45;overflow-wrap:anywhere}
+.enh-review-item small{font-size:11px;color:#82949c}
+.enh-review-item p{font-size:12px;line-height:1.6;color:#496b74;max-height:98px;overflow:auto;white-space:pre-wrap;margin:5px 0}
+.enh-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.enh-notice{padding:10px 12px;margin-bottom:12px;background:#e6f8f0;color:#18654e;font-size:12px;border-radius:9px}
+.enh-notice.error{background:#fff0ee;color:#a84031}
+.enh-structured{border:1px solid #d2e7df;border-radius:13px;padding:13px;margin:14px 0;background:#f5fcf9}
+.enh-structured h3{font-size:14px;margin:0 0 5px;color:#195b55}
+.enh-structured p{font-size:12px;color:#6d8585;margin:0 0 10px}
+.enh-structured-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.enh-structured-grid .field{min-width:0;margin:0}
+.enh-structured-grid .field:last-child{grid-column:1/-1}
+.enh-draft-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.enh-draft-state{font-size:12px;color:#597a80;flex:1;min-width:170px}
+.enh-draft-state.error{color:#ad493b}
+.enh-mobile-nav{display:none}
+.enh-quick-layer[hidden],.enh-mobile-nav[hidden]{display:none!important}
+.enh-quick-layer{position:fixed;inset:0;z-index:10010;background:rgba(8,27,36,.57);display:grid;place-items:center;padding:18px}
+.enh-quick-dialog{background:#fff;color:#21434c;width:min(420px,96vw);border-radius:18px;padding:22px;box-shadow:0 20px 65px rgba(0,0,0,.18)}
+.enh-quick-dialog h2{margin:0 0 10px;font-size:19px}
+.enh-quick-dialog p{margin:0 0 14px;font-size:12px;color:#6a8189;line-height:1.65}
+.enh-quick-dialog select{display:block;width:100%;min-height:46px;border:1px solid #bfd3d4;border-radius:10px;padding:10px;font-size:16px;margin:10px 0 15px}
+.enh-quick-actions{display:flex;justify-content:end;gap:8px}
+@media(max-width:1060px){.enh-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.enh-review-columns{grid-template-columns:1fr}}
+@media(max-width:780px){
+  .enh-card{padding:14px 12px;margin:12px 0;border-radius:13px}
+  .enh-tiles{grid-template-columns:1fr}
+  .enh-head{gap:8px}
+  .enh-head h2{font-size:16px}
+  .enh-mobile-nav:not([hidden]){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;bottom:0;left:0;right:0;z-index:1900;background:#fff;padding:7px 8px calc(7px + env(safe-area-inset-bottom));box-shadow:0 -4px 15px rgba(13,48,57,.12);border-top:1px solid #dde9e9}
+  .enh-mobile-nav button{min-width:0;border:0;background:transparent;color:#53737e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 2px;border-radius:10px;font-size:12px;font-weight:750;min-height:48px}
+  .enh-mobile-nav button span{font-size:19px;line-height:1}
+  .enh-mobile-nav button.active{color:#087d73;background:#e8f7f1}
+  #appScreen .page{padding-bottom:calc(105px + env(safe-area-inset-bottom))}
+  .enh-structured-grid{grid-template-columns:1fr}
+  .enh-structured-grid .field:last-child{grid-column:auto}
+}
+@media(prefers-reduced-motion:reduce){.enh-alert{scroll-behavior:auto}}

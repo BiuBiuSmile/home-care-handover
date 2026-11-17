@@ -46,6 +46,7 @@
  async function init(){
    window.HandoverRooms?.bindInbox();
    window.TeamPoints?.bind();
+   window.CareWorkspace?.init();
    $('toggleAdminLogin').addEventListener('click',()=>setAuthMode(state.authMode==='staff'?'admin':'staff'));
    $('adminResetBtn').addEventListener('click',requestAdminPasswordRecovery);
    $('adminRecoveryForm').addEventListener('submit',submitAdminPasswordRecovery);
@@ -129,7 +130,7 @@
      try{window.HandoverPhotos?.preview($('recordPhotos'),$('recordPhotosPreview'))}
      catch(e){notify('照片選取失敗：'+errText(e),true)}
    });
-   $('cancelRecord').addEventListener('click',closeHandover);
+   $('cancelRecord').addEventListener('click',()=>closeHandover());
    $('handoverLayer').addEventListener('click',e=>{if(e.target===$('handoverLayer'))closeHandover()});
    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHandover();closeResetPassword();closeDeleteUser()}});
    if(!config.SUPABASE_URL || !config.SUPABASE_ANON_KEY || config.SUPABASE_URL.includes('YOUR_') || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.SUPABASE_URL) || !window.supabase?.createClient){
@@ -438,6 +439,7 @@
      window.HandoverPhotos?.destroy();
      window.Rewards?.destroy();
      window.TeamPoints?.destroy();
+     window.CareWorkspace?.destroy();
      state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
      state.current=null;state.caseOpen=false;state.casePage=1;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -450,6 +452,7 @@
      window.HandoverRooms?.clearInbox();
      window.Rewards?.destroy();
      window.TeamPoints?.destroy();
+     window.CareWorkspace?.destroy();
      state.cases=[];state.records=[];state.reads=[];state.current=null;
      state.caseOpen=false;state.casePage=1;state.browserScroll=0;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -496,7 +499,7 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {state.tab='cases';window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.HandoverPhotos?.destroy();window.Rewards?.destroy();window.TeamPoints?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {state.tab='cases';window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.HandoverPhotos?.destroy();window.Rewards?.destroy();window.TeamPoints?.destroy();window.CareWorkspace?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
    if(!['cases','admin','rewards','teamPoints'].includes(tab))return;
@@ -514,6 +517,7 @@
    $('teamPointsTab').classList.toggle('active',tab==='teamPoints');
    if(tab==='rewards')window.Rewards?.show({db:state.db,user:state.user,profile:state.profile});
    if(tab==='teamPoints')window.TeamPoints?.show({db:state.db,user:state.user,profile:state.profile});
+   window.CareWorkspace?.syncTab(tab);
  }
  async function refreshDashboard(message=true){
    if(!state.profile?.active)return;
@@ -529,6 +533,20 @@
      state.reads=await checkQuery(reads,'取得已讀狀態');
      if(!state.cases.some(x=>x.id===state.current))state.current=state.cases[0]?.id||null;
      renderCaseList();if(state.caseOpen)renderDetail();
+     window.CareWorkspace?.mount({
+       db:state.db,user:state.user,profile:state.profile,cases:state.cases,records:state.records,reads:state.reads,
+       callbacks:{
+         chooseTab,
+         showBrowser:()=>{chooseTab('cases');showCaseBrowser()},
+         openCase:(id,section='history')=>{
+           if(!state.cases.some(c=>c.id===id))return;
+           chooseTab('cases');showCaseDetail(id);
+           window.CareCollab?.selectTab(section);
+         },
+         openInvitedRoom:id=>{chooseTab('cases');window.HandoverRooms?.openInvitedRoom(id)},
+         openNewHandover:()=>openHandover()
+       }
+     }).catch(e=>notify('交班提醒讀取失敗：'+errText(e),true));
      if(window.HandoverRooms)window.HandoverRooms.loadInvites({db:state.db,user:state.user,profile:state.profile})
        .catch(e=>notify('交班邀請更新失敗：'+errText(e),true));
      if(message)notify('資料已更新');
@@ -698,8 +716,20 @@
         .catch(e=>notify('載入臨時交班室失敗：'+errText(e),true));
    }
  }
- function openHandover(){if(!selectedCase())return;$('handoverForm').reset();window.HandoverPhotos?.clearPreview($('recordPhotosPreview'));$('handoverTitle').textContent='新增交班｜'+selectedCase().name;$('handoverLayer').hidden=false;document.body.style.overflow='hidden';$('recordSummary').focus()}
- function closeHandover(){if($('submitRecord').disabled)return;$('handoverLayer').hidden=true;document.body.style.overflow='';window.HandoverPhotos?.clearPreview($('recordPhotosPreview'))}
+ function openHandover(){
+   const c=selectedCase();if(!c)return;
+   $('handoverForm').reset();
+   window.HandoverPhotos?.clearPreview($('recordPhotosPreview'));
+   $('handoverTitle').textContent='新增交班｜'+c.name;
+   $('handoverLayer').hidden=false;document.body.style.overflow='hidden';$('recordSummary').focus();
+   window.CareWorkspace?.openForm(c).catch(e=>notify('雲端草稿讀取失敗：'+errText(e),true));
+ }
+ async function closeHandover(force=false){
+   if($('submitRecord').disabled)return;
+   if(!force&&window.CareWorkspace&&!(await window.CareWorkspace.closeForm()))return;
+   $('handoverLayer').hidden=true;document.body.style.overflow='';
+   window.HandoverPhotos?.clearPreview($('recordPhotosPreview'));
+ }
  async function saveHandover(e){
    e.preventDefault();const c=selectedCase();if(!c)return;
    const risk=$('recordRisk').value;
@@ -709,15 +739,19 @@
    const button=$('submitRecord');button.disabled=true;
    let photos=[];
    try{
+     await window.CareWorkspace?.beforeSubmit();
      photos=await window.HandoverPhotos.uploadSelected({
        input:$('recordPhotos'),db:state.db,userId:state.user.id,caseId:c.id
      });
      payload.photo_paths=photos;
      await checkQuery(await state.db.from('handovers').insert(payload),'儲存交班');
-     button.disabled=false;closeHandover();
+     button.disabled=false;
+     await window.CareWorkspace?.afterSubmit(c.id);
+     await closeHandover(true);
      await refreshDashboard(false);
      notify('交班已儲存'+(photos.length?'（含 '+photos.length+' 張照片）':'')+'，待居督或管理員確認。');
    }catch(error){
+     window.CareWorkspace?.resumeDraft();
      await window.HandoverPhotos?.removeUnlinked(state.db,photos);
      notify('交班儲存失敗：'+errText(error),true);
    }finally{button.disabled=false}

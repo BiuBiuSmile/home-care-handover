@@ -314,6 +314,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <link rel="stylesheet" href="./team-points.css?v=1">
 <link rel="stylesheet" href="./rewards.css?v=2">
 <link rel="stylesheet" href="./badge-achievements-v3.css?v=20261117-all13">
+<link rel="stylesheet" href="./care-workspace.css?v=20261117-1">
 </head>
 <body>
 <section class="auth-shell" id="authScreen">
@@ -388,6 +389,8 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
      <div class="stat-card attention"><span class="stat-icon">◷</span><div><small>待我閱讀</small><strong id="statUnreadCount">0</strong></div></div>
      <div class="stat-card"><span class="stat-icon">▤</span><div><small>已有交班紀錄</small><strong id="statRecordedCount">0</strong></div></div>
     </div>
+    <section id="careAlertsHub" class="enh-card" aria-label="我的交班提醒" hidden></section>
+    <section id="careReviewHub" class="enh-card" aria-label="居督集中審核" hidden></section>
     <section class="panel browser-panel" aria-label="個案清單">
      <div class="browser-top">
       <div><h2>個案清單</h2><p class="help">依姓名、案號或區域搜尋，不必逐筆滑動查找。</p></div>
@@ -573,6 +576,12 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   </section>
 
  </main>
+ <nav id="careMobileNav" class="enh-mobile-nav" aria-label="手機快捷操作" hidden>
+  <button type="button" data-mobile-action="cases"><span aria-hidden="true">🏠</span>我的個案</button>
+  <button type="button" data-mobile-action="alerts"><span aria-hidden="true">🔔</span>待閱交班</button>
+  <button type="button" data-mobile-action="compose"><span aria-hidden="true">✍️</span>新增交班</button>
+  <button type="button" data-mobile-action="rewards"><span aria-hidden="true">🏅</span>我的成就</button>
+ </nav>
 </section>
 <div id="deleteUserLayer" class="dialog-layer" hidden>
  <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="deleteUserTitle">
@@ -607,11 +616,31 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   </form>
  </section>
 </div>
-<div id="handoverLayer" class="dialog-layer" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="handoverTitle"><h2 id="handoverTitle">新增交班紀錄</h2><p class="help">紀錄會保存在個案歷程中，只有已授權人員可以查閱。重大異常仍須立即通知督導。</p><form id="handoverForm"><div class="split"><div class="field"><label for="recordKind">交班類型</label><select id="recordKind" required><option>日常照顧</option><option>環境與安全</option><option>生活習慣</option><option>家屬溝通</option><option>異常狀況</option><option>服務調整</option></select></div><div class="field"><label for="recordRisk">重要程度</label><select id="recordRisk" required><option>一般</option><option>提醒</option><option>緊急</option></select></div></div><div class="field"><label for="recordSummary">交班主旨</label><input id="recordSummary" maxlength="100" required></div><div class="field"><label for="recordDescription">交班內容與下次注意事項</label><textarea id="recordDescription" maxlength="2000" minlength="8" required></textarea></div>
-<div class="field handover-photo-field"><label for="recordPhotos">📷 交班照片（選填，最多 3 張）</label>
+<div id="handoverLayer" class="dialog-layer" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="handoverTitle"><h2 id="handoverTitle">新增交班紀錄</h2><p class="help">紀錄會保存在個案歷程中，只有已授權人員可以查閱。重大異常仍須立即通知督導。</p><form id="handoverForm"><div class="split"><div class="field"><label for="recordKind">交班類型</label><select id="recordKind" required><option>日常照顧</option><option>環境與安全</option><option>生活習慣</option><option>家屬溝通</option><option>異常狀況</option><option>服務調整</option></select></div><div class="field"><label for="recordRisk">重要程度</label><select id="recordRisk" required><option>一般</option><option>提醒</option><option>緊急</option></select></div></div><div class="field"><label for="recordSummary">交班主旨</label><input id="recordSummary" maxlength="100" required></div><section class="enh-structured" aria-label="快速交班範本">
+  <h3>📝 結構化快速交班</h3><p>只選實際觀察到的狀況；未選擇的項目不會自動推測或寫入紀錄。</p>
+  <div class="enh-structured-grid">
+   <div class="field"><label for="structuredMental">精神狀況</label><select id="structuredMental"><option value="">未填寫</option><option>精神穩定</option><option>精神較差，需留意</option><option>意識或精神狀況有異常</option></select></div>
+   <div class="field"><label for="structuredFood">飲食情形</label><select id="structuredFood"><option value="">未填寫</option><option>飲食正常</option><option>食慾下降，需留意</option><option>進食異常，已告知相關人員</option></select></div>
+   <div class="field"><label for="structuredMove">行動能力</label><select id="structuredMove"><option value="">未填寫</option><option>與平常相同</option><option>移動需增加協助</option><option>行動明顯改變，需追蹤</option></select></div>
+   <div class="field"><label for="structuredMood">情緒互動</label><select id="structuredMood"><option value="">未填寫</option><option>情緒穩定</option><option>情緒較低落</option><option>情緒波動或抗拒照顧</option></select></div>
+   <div class="field"><label for="structuredSafety">居家安全</label><select id="structuredSafety"><option value="">未填寫</option><option>未發現新安全異常</option><option>需留意跌倒或移位風險</option><option>發現新的安全風險，已處理或通報</option></select></div>
+   <div class="field"><label for="structuredNext">接班注意事項（選填）</label><textarea id="structuredNext" maxlength="500" rows="2" placeholder="簡述下次服務需要注意的事實事項"></textarea></div>
+  </div>
+  <button type="button" class="btn alt enh-mini" id="recordUseTemplate">帶入下方交班內容</button>
+ </section>
+ <div class="field"><label for="recordDescription">交班內容與下次注意事項</label><textarea id="recordDescription" maxlength="2000" minlength="8" required></textarea></div>
+<div class="enh-draft-bar"><span id="recordDraftState" class="enh-draft-state" role="status">雲端草稿僅自己可查看，照片不納入草稿。</span><button type="button" class="btn alt enh-mini" id="recordSaveDraft">儲存草稿</button><button type="button" class="btn alt enh-mini" id="recordDeleteDraft">刪除草稿</button></div>
+ <div class="field handover-photo-field"><label for="recordPhotos">📷 交班照片（選填，最多 3 張）</label>
 <input id="recordPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
 <div id="recordPhotosPreview" class="handover-photo-preview"></div>
 <small>送出前可預覽；照片將壓縮並移除拍攝資訊。僅限個案授權人員查閱。</small></div><div class="field"><label for="recordExpires">提醒有效期限（可空白）</label><input id="recordExpires" type="date"></div><label class="help"><input type="checkbox" id="urgentAck" style="min-height:18px;width:18px;vertical-align:middle"> 如屬重大異常，已依機構規定即時通知督導</label><footer><button type="button" class="btn alt" id="cancelRecord">取消</button><button type="submit" class="btn" id="submitRecord">儲存交班</button></footer></form></section></div>
+<div id="careQuickLayer" class="enh-quick-layer" hidden role="presentation">
+ <section class="enh-quick-dialog" role="dialog" aria-modal="true" aria-labelledby="careQuickTitle">
+  <h2 id="careQuickTitle">快速新增正式交班</h2><p>請先選擇你有權限的個案，系統會開啟正式交班表單。</p>
+  <label for="careQuickCase">服務個案</label><select id="careQuickCase"><option value="">請選擇個案</option></select>
+  <div class="enh-quick-actions"><button class="btn alt" type="button" id="careQuickDismiss">取消</button><button class="btn" type="button" id="careQuickStart">開始填寫</button></div>
+ </section>
+</div>
 <div id="teamPointsDetailLayer" class="tp-detail-layer" role="dialog" aria-modal="true" aria-labelledby="teamPointsDetailTitle" hidden>
  <section class="tp-detail-card">
   <div class="tp-detail-top"><div><small id="teamPointsDetailMeta">員工點數明細</small><h2 id="teamPointsDetailTitle">點數明細</h2></div>
@@ -626,9 +655,10 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <script src="./case-collab.js?v=20261117-rewards" defer></script>
 <script src="./handover-photos.js?v=1" defer></script>
 <script src="./handover-rooms.js?v=20261117-photos" defer></script>
+<script src="./care-workspace.js?v=20261117-1" defer></script>
 <script src="./badge-achievements-v3.js?v=20261117-all13" defer></script>
 <script src="./rewards.js?v=3" defer></script>
 <script src="./team-points.js?v=2" defer></script>
-<script src="./portal.js?v=20261117-tabfix" defer></script>
+<script src="./portal.js?v=20261117-workspace" defer></script>
 </body>
 </html>
