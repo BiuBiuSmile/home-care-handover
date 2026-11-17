@@ -59,6 +59,7 @@ create table public.cases (
   name text not null check (length(trim(name)) between 1 and 100),
   area text not null default '',
   service text not null default '',
+  address text not null default '' check (char_length(address) <= 300),
   status text not null default '服務中',
   supervisor_name text not null default '',
   caregiver_name text not null default '',
