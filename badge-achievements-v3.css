@@ -33,3 +33,18 @@
 @media(max-width:680px){.badge-v3-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.badge-v3-card{padding:14px 9px}.badge-v3-form{grid-template-columns:1fr}.badge-v3-full{grid-column:1}}
 @media(max-width:380px){.badge-v3-gallery{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.badge-v3-image{background-image:url('./assets/badges/achievement-ten-v3-static.webp')}}
+
+/* 原始三款之「新進夥伴引導員」：完整固定圖案，只有星光閃爍，避免裁切或左右移動。 */
+.badge-v3-image.badge-v3-mentor{
+  background-image:url('./assets/badges/newcomer-mentor-fixed.webp?v=20261117');
+  background-size:96px 96px;
+  background-position:center center;
+  background-repeat:no-repeat;
+  animation:none;
+  transform:none;
+}
+@media(prefers-reduced-motion:reduce){
+  .badge-v3-image.badge-v3-mentor{
+    background-image:url('./assets/badges/newcomer-mentor-fixed-static.webp?v=20261117');
+  }
+}

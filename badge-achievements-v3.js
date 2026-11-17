@@ -13,6 +13,7 @@
  function stop(){state.seq++;state.db=null;state.user=null;state.profile=null;state.badges=[];state.mine=[];state.progress=[];state.cases=[];state.people=[];state.evidence=[];state.lastUser=null;state.busy=false;}
  function awardImage(b,won){
    const idx=sprites.indexOf(b.code);
+   if(b.code==='mentor')return '<span role="img" aria-label="'+esc(b.title)+'動畫徽章" class="badge-v3-image badge-v3-mentor'+(won?'':' is-locked')+'"></span>';
    if(idx<0)return '<span class="badge-v3-legacy" aria-hidden="true">'+esc(b.icon||'🏅')+'</span>';
    return '<span role="img" aria-label="'+esc(b.title)+'動畫徽章" class="badge-v3-image badge-v3-image-'+idx+(won?'':' is-locked')+'">'+
     '<span class="badge-v3-image-fallback" aria-hidden="true">'+esc(b.icon||'🏅')+'</span></span>';
