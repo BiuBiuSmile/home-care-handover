@@ -51,3 +51,42 @@
 .reward-notice.error{background:#fff2ee;color:#a34f3d;border-color:#efd2ca}
 .reward-fineprint{color:#8a9ba2;font-size:12px;line-height:1.8;margin:18px 4px}
 @media(max-width:760px){.reward-hero{padding:19px;align-items:stretch}.reward-balance{width:100%}.reward-catalog{grid-template-columns:1fr}.reward-section{padding:17px;margin-top:15px}.reward-review-row{flex-direction:column}.reward-review-actions{width:100%}.reward-review-actions button{flex:1;white-space:normal}.reward-entry{align-items:flex-start;flex-wrap:wrap}}
+
+
+/* v2 · monthly mission & lifetime achievement badges */
+.reward-mission-section{border-color:#bfe5d9;background:linear-gradient(155deg,#fbfffd,#f1faf6)}
+.reward-mission-card{border:1px solid #d8ebe5;border-radius:15px;background:#fff;padding:19px 21px}
+.reward-mission-top{display:flex;justify-content:space-between;align-items:center;gap:18px}
+.reward-mission-date{font-size:12px;font-weight:800;color:#168373}
+.reward-mission-top h3{font-size:17px;color:#23525a;margin:5px 0 7px}
+.reward-mission-top p{font-size:12px;color:#728a91;line-height:1.7;margin:0}
+.reward-mission-bonus{white-space:nowrap;background:#fff4dc;color:#946118;border-radius:13px;padding:11px 16px;font-size:12px;font-weight:750;text-align:center}
+.reward-mission-bonus b{display:block;font-size:21px;color:#b36f08}
+.reward-mission-progress{margin:19px 0 9px;height:12px;border-radius:99px;background:#e7f1ef;overflow:hidden}
+.reward-mission-progress-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#19b49e,#008777);transition:width .25s ease}
+.reward-mission-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:#70878c}
+.reward-mission-foot strong{color:#087b70}
+.reward-mission-foot .reward-mission-done{color:#138469}
+.reward-badge-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.reward-badge-card{display:flex;flex-direction:column;gap:9px;border:1px solid #e1e8eb;border-radius:14px;padding:18px;background:#f9fbfc;opacity:.88;min-width:0}
+.reward-badge-card.achieved{opacity:1;border-color:#d7d4a4;background:linear-gradient(145deg,#fffdf3,#f6fbf7);box-shadow:0 3px 14px rgba(148,130,53,.05)}
+.reward-badge-top{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.reward-badge-icon{display:grid;place-items:center;width:48px;height:48px;background:#f0f3f6;border-radius:13px;font-size:26px}
+.reward-badge-card.achieved .reward-badge-icon{background:#fff0c9}
+.reward-badge-state{font-size:11px;border-radius:99px;padding:5px 9px;background:#edf1f2;color:#809198;font-weight:800;white-space:nowrap}
+.reward-badge-card.achieved .reward-badge-state{background:#e4f6e9;color:#168151}
+.reward-badge-card h3{margin:3px 0 0;color:#2e4f59;font-size:15px}
+.reward-badge-card p{font-size:12px;line-height:1.7;color:#68818a;flex:1;margin:0}
+.reward-badge-card small{font-size:11px;color:#69818a;line-height:1.65}
+.reward-badge-card .reward-badge-earned{color:#11856e;font-weight:800}
+.reward-badge-meter{height:8px;overflow:hidden;border-radius:99px;background:#e9eeee}
+.reward-badge-meter span{display:block;height:100%;border-radius:99px;background:#c99b32}
+.reward-mentor-panel{border-color:#d7e6e5}
+.reward-mentor-form{display:grid;grid-template-columns:minmax(190px,240px) minmax(240px,1fr) auto;align-items:end;gap:12px}
+.reward-mentor-form label{display:flex;flex-direction:column;gap:6px;color:#496871;font-size:12px;font-weight:800}
+.reward-mentor-form select,.reward-mentor-form textarea{border:1px solid #d1e1e3;border-radius:9px;padding:11px 12px;min-height:44px;background:#fff;font-size:13px;color:#284a54;width:100%}
+.reward-mentor-form textarea{min-height:70px;resize:vertical}
+.reward-mentor-form .btn{white-space:nowrap;min-height:44px}
+@media(max-width:920px){.reward-badge-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.reward-mentor-form{grid-template-columns:1fr 1fr}.reward-mentor-form label:nth-child(2){grid-column:2}.reward-mentor-form button{grid-column:1/-1}}
+@media(max-width:600px){.reward-badge-grid{grid-template-columns:1fr}.reward-mission-top{align-items:flex-start;flex-direction:column}.reward-mission-bonus{width:100%;display:flex;justify-content:space-between;align-items:center}.reward-mentor-form{grid-template-columns:1fr}.reward-mentor-form label:nth-child(2){grid-column:1}.reward-mentor-form button{grid-column:1}}
+@media(prefers-reduced-motion:reduce){.reward-mission-progress-fill{transition:none}}
