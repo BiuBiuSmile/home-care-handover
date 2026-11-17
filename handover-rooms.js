@@ -25,6 +25,7 @@
    el.hidden=!msg;el.textContent=msg||'';el.className='temp-notice'+(failed?' error':'');
  }
  function destroy(){
+   if(s.root)window.HandoverPhotos?.clearPreview($('tempPhotosPreview'));
    s.seq++;if(s.timer!==null)clearInterval(s.timer);if(s.tick!==null)clearInterval(s.tick);
    if(s.root)s.root.innerHTML='';
    s.root=null;s.mode=null;s.db=null;s.caseId=null;s.userId=null;s.profile=null;
@@ -54,6 +55,7 @@
        '<div class="temp-messages" id="tempMessages"><p class="temp-empty">載入訊息中…</p></div>',
        '<form id="tempChatForm" class="temp-chat" hidden>',
          '<label for="tempBody">交班文字</label><textarea id="tempBody" rows="4" minlength="2" maxlength="3000" required placeholder="說明代班注意事項、服務方式，或向 A 詢問問題…"></textarea>',
+         '<div class="handover-photo-field"><label for="tempPhotos">📷 附加照片（選填，最多 3 張）</label><input id="tempPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple><div id="tempPhotosPreview" class="handover-photo-preview"></div><small>圖片只提供受邀交班者及授權管理人員查閱，請勿上傳不必要的個人資訊。</small></div>',
          '<div class="temp-chat-bottom"><small>訊息永久保存且不可任意刪改。</small><button id="tempSend" class="btn" type="submit">傳送交班訊息</button></div>',
        '</form>',
        '<section id="tempSummary" class="temp-summary" hidden>',
@@ -74,6 +76,10 @@
      s.roomId=null;s.messages=[];renderList();
    });
    $('tempChatForm').addEventListener('submit',send);
+   $('tempPhotos').addEventListener('change',()=>{
+     try{window.HandoverPhotos?.preview($('tempPhotos'),$('tempPhotosPreview'))}
+     catch(e){notify('照片選取失敗：'+err(e),true)}
+   });
    $('tempSummaryForm').addEventListener('submit',publish);
  }
  async function recipients(){
@@ -150,7 +156,7 @@
  async function messages(){
    const id=s.roomId,seq=s.seq;if(!id)return;
    const {data,error}=await s.db.from('handover_room_messages')
-     .select('id,author_id,author_name,body,created_at').eq('room_id',id)
+     .select('id,author_id,author_name,body,photo_paths,created_at').eq('room_id',id)
      .order('created_at',{ascending:false}).limit(500);
    if(seq!==s.seq||id!==s.roomId)return;
    if(error){notify('載入對話失敗：'+err(error),true);return}
@@ -161,9 +167,10 @@
    const bottom=el.scrollHeight-el.scrollTop-el.clientHeight<100;
    el.innerHTML=s.messages.map(m=>'<article class="temp-message '+(m.author_id===s.userId?'own':'')+'">'+
      '<div class="temp-message-heading"><b>'+esc(m.author_name)+'</b><time>'+fmt(m.created_at)+'</time></div>'+
-     '<p>'+esc(m.body)+'</p></article>'
+     '<p>'+esc(m.body)+'</p>'+(window.HandoverPhotos?.markup(m.photo_paths)||'')+'</article>'
    ).join('')||'<p class="temp-empty">目前沒有交班留言。A 可先寫入注意事項，B 也能在 48 小時內詢問。</p>';
    if(bottom)el.scrollTop=el.scrollHeight;
+   window.HandoverPhotos?.hydrate(el,s.db);
  }
  async function createRoom(e){
    e.preventDefault();if(s.busy)return;
@@ -187,12 +194,22 @@
    if(!open(r)||!participant(r))return notify('交班室已到期或沒有留言權限。',true);
    if(body.length<2||body.length>3000)return notify('請輸入 2～3000 字。',true);
    s.busy=true;$('tempSend').disabled=true;
+   let paths=[];
    try{
-     const {error}=await s.db.from('handover_room_messages').insert({room_id:r.id,body});
+     paths=await window.HandoverPhotos.uploadSelected({
+       input:$('tempPhotos'),db:s.db,userId:s.userId,roomId:r.id
+     });
+     const {error}=await s.db.from('handover_room_messages')
+       .insert({room_id:r.id,body,photo_paths:paths});
      if(error)throw error;
-     $('tempBody').value='';await messages();notify('');
-   }catch(e){notify('無法發送：'+err(e),true);await refresh()}
-   finally{s.busy=false;if($('tempSend'))$('tempSend').disabled=false;drawHeader()}
+     $('tempBody').value='';$('tempPhotos').value='';
+     window.HandoverPhotos.clearPreview($('tempPhotosPreview'));
+     await messages();notify(paths.length?'已傳送交班訊息與 '+paths.length+' 張照片。':'');
+   }catch(e){
+     await window.HandoverPhotos?.removeUnlinked(s.db,paths);
+     notify('無法發送：'+err(e),true);
+     await refresh();
+   }finally{s.busy=false;if($('tempSend'))$('tempSend').disabled=false;drawHeader()}
  }
  async function publish(e){
    e.preventDefault();if(s.busy)return;
