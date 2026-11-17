@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#102940">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>安護交班｜登入與管理平台</title>
+<title>大安心交班｜登入與管理平台</title>
 <link rel="stylesheet" href="./case-collab.css">
 <link rel="stylesheet" href="./handover-rooms.css">
 <link rel="stylesheet" href="./handover-photos.css?v=1">
@@ -319,7 +319,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <section class="auth-shell" id="authScreen">
  <div class="auth-card auth-card-select">
   <button id="toggleAdminLogin" class="auth-corner-toggle" type="button" aria-pressed="false">管理員登入</button>
-  <div class="brand"><span class="logo">護</span> 安護交班</div>
+  <div class="brand"><span class="logo">安</span> 大安心交班</div>
   <h1 id="authHeading">員工帳號登入</h1>
   <p class="help" id="authHint">員工使用手機號碼和個人密碼登入；帳號由管理員建立。</p>
   <div id="configMessage" class="msg error" hidden>Supabase 連線尚未設定，請通知系統管理員。</div>
@@ -340,7 +340,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 </section>
 <section class="auth-shell" id="adminRecoveryScreen" hidden>
  <div class="auth-card admin-recovery-card">
-  <div class="brand"><span class="logo">護</span> 安護交班</div>
+  <div class="brand"><span class="logo">安</span> 大安心交班</div>
   <h1>設定管理員新密碼</h1>
   <p class="help">已透過 Email 安全連結驗證身分。新密碼可設定為 10～72 碼英數組合，也接受身分證字號格式；考量個資安全，不建議使用真實身分證字號。</p>
   <form id="adminRecoveryForm">
@@ -353,7 +353,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 </section>
 <section class="auth-shell" id="changeScreen" hidden>
  <div class="auth-card">
-  <div class="brand"><span class="logo">護</span> 安護交班</div>
+  <div class="brand"><span class="logo">安</span> 大安心交班</div>
   <h1>首次登入｜設定個人密碼</h1>
   <p class="help">為保障個案紀錄安全，初始密碼只能用於登入並建立自己的密碼。設定完成前無法閱讀或新增交班紀錄。</p>
   <form id="changePasswordForm">
@@ -365,9 +365,9 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   <button type="button" class="btn alt" id="changeLogout" style="width:100%;margin-top:12px">登出</button>
  </div>
 </section>
-<section class="auth-shell" id="pendingScreen" hidden><div class="auth-card"><div class="brand"><span class="logo">護</span> 安護交班</div><h1 id="pendingTitle">帳號待審核</h1><p class="help" id="pendingMessage">已成功驗證身分，但尚未取得使用權限。請通知管理員啟用帳號並指派個案。</p><div class="auth-actions"><button class="btn alt" type="button" id="pendingReload">重新檢查</button><button class="btn warn" type="button" id="pendingLogout">登出</button></div></div></section>
+<section class="auth-shell" id="pendingScreen" hidden><div class="auth-card"><div class="brand"><span class="logo">安</span> 大安心交班</div><h1 id="pendingTitle">帳號待審核</h1><p class="help" id="pendingMessage">已成功驗證身分，但尚未取得使用權限。請通知管理員啟用帳號並指派個案。</p><div class="auth-actions"><button class="btn alt" type="button" id="pendingReload">重新檢查</button><button class="btn warn" type="button" id="pendingLogout">登出</button></div></div></section>
 <section id="appScreen" hidden>
- <header class="topbar"><div class="brand"><span class="logo">護</span> <div>安護交班<div><small>個案交班資訊中心</small></div></div></div><div class="action-inline"><span id="identity"></span><button class="btn" type="button" id="logoutBtn">登出</button></div></header>
+ <header class="topbar"><div class="brand"><span class="logo">安</span> <div>大安心交班<div><small>個案交班資訊中心</small></div></div></div><div class="action-inline"><span id="identity"></span><button class="btn" type="button" id="logoutBtn">登出</button></div></header>
  <main class="page">
   <div class="navtabs"><button class="active" type="button" id="casesTab">交班工作台</button><button type="button" id="adminTab" hidden>管理員後台</button><button type="button" id="rewardsTab">點數獎勵</button><button type="button" id="teamPointsTab" hidden>全員點數</button></div>
   <section id="casesPage">
