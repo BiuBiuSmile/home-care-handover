@@ -6,11 +6,11 @@
  const fmt=x=>x?new Date(x).toLocaleDateString('zh-TW',{timeZone:'Asia/Taipei'}):'';
  const roles={staff:'居服員',supervisor:'居督',admin:'管理員'};
  const sprites=['handover_first','handover_partner','care_observer','safety_guardian','monthly_star','handover_constellation','care_notebook','handover_fifty','support_hero','legendary_caregiver'];
- const state={db:null,user:null,profile:null,seq:0,busy:false,badges:[],mine:[],progress:[],cases:[],people:[],evidence:[],lastUser:null};
+ const state={db:null,user:null,profile:null,seq:0,busy:false,badges:[],mine:[],progress:[],cases:[],people:[],evidence:[],mentorAlready:new Set(),lastUser:null};
  const authorized=()=>state.user?.id&&state.db&&state.profile?.active;
  const reviewer=()=>['admin','supervisor'].includes(state.profile?.role);
  const message=(msg,isError)=>{const box=$('badgeV3Status');if(box){box.textContent=msg;box.hidden=!msg;box.className='badge-v3-status'+(isError?' error':'')}};
- function stop(){state.seq++;state.db=null;state.user=null;state.profile=null;state.badges=[];state.mine=[];state.progress=[];state.cases=[];state.people=[];state.evidence=[];state.lastUser=null;state.busy=false;}
+ function stop(){state.seq++;state.db=null;state.user=null;state.profile=null;state.badges=[];state.mine=[];state.progress=[];state.cases=[];state.people=[];state.evidence=[];state.mentorAlready=new Set();state.lastUser=null;state.busy=false;}
  function awardImage(b,won){
    const idx=sprites.indexOf(b.code);
    // 原本兩枚 Emoji 徽章也使用小尺寸固定位置的動態盾牌，保留既有解鎖資料。
@@ -46,8 +46,9 @@
         (won?'<div class="badge-v3-earned">解鎖：'+fmt(mine.get(b.code).awarded_at)+'</div>':'')+
        '</article>';
       }).join('')+'</div></section>'+
-      (reviewer()?verificationForm():'');
+      (reviewer()?verificationForm()+mentorGrantForm():'');
    $('badgeV3Submit')?.addEventListener('click',submitVerification);
+   $('badgeV3MentorGrant')?.addEventListener('click',grantMentor);
  }
  function verificationForm(){
    const employees=state.people.filter(p=>p.role==='staff'&&p.active&&p.user_id!==state.user.id);
@@ -68,6 +69,37 @@
        const title={care_observer:'照顧觀察',safety_guardian:'安全預防',support_hero:'臨時支援'}[e.category]||e.category;
        return '<div class="reward-entry"><div><strong>'+esc(title)+' · '+esc(person)+'</strong><small>'+esc(e.service_date)+' · '+esc(state.cases.find(c=>c.id===e.case_id)?.name||'授權個案')+'</small></div></div>';
       }).join('')+'</div></details>':'')+'</section>';
+ }
+ function mentorGrantForm(){
+   const eligible=state.people.filter(p=>p.role==='staff'&&p.active&&p.user_id!==state.user?.id&&!state.mentorAlready.has(p.user_id));
+   return '<section class="reward-section reward-mentor-panel"><div class="reward-section-title">'+
+     '<h2>🤝 新進夥伴引導員｜授予徽章</h2><p>居督或管理員核實同仁曾協助新進夥伴熟悉個案後，填寫事由授予永久徽章；每人僅能取得一次，不加點、不扣點。</p></div>'+
+     '<div id="badgeV3MentorStatus" class="badge-v3-status" role="status" hidden></div>'+
+     (eligible.length?'<div class="reward-mentor-form"><label>授予對象<select id="badgeV3MentorUser"><option value="">請選擇居服員</option>'+
+       eligible.map(p=>'<option value="'+esc(p.user_id)+'">'+esc(p.display_name)+'</option>').join('')+'</select></label>'+
+       '<label>引導事由<textarea id="badgeV3MentorReason" rows="2" maxlength="300" placeholder="請填寫具體協助內容（至少 8 字）"></textarea></label>'+
+       '<button type="button" class="btn" id="badgeV3MentorGrant">確認授予永久徽章</button></div>':
+       '<div class="reward-empty">目前沒有待授予此徽章的居服員。</div>')+'</section>';
+ }
+ async function grantMentor(){
+   if(!reviewer()||state.busy)return;
+   const who=$('badgeV3MentorUser')?.value||'';
+   const note=$('badgeV3MentorReason')?.value?.trim()||'';
+   const person=state.people.find(p=>p.user_id===who&&p.role==='staff'&&p.active&&!state.mentorAlready.has(p.user_id));
+   const status=(msg,failed=false)=>{const el=$('badgeV3MentorStatus');if(el){el.textContent=msg;el.hidden=!msg;el.className='badge-v3-status'+(failed?' error':'')}};
+   if(!person)return status('請先選擇一位居服員。',true);
+   if(note.length<8||note.length>300)return status('請填寫 8～300 字的具體引導事由。',true);
+   if(!window.confirm('確認「'+person.display_name+'」已實際協助新進夥伴熟悉個案？此徽章永久保留，且每人僅能取得一次。'))return;
+   state.busy=true;
+   const button=$('badgeV3MentorGrant');
+   if(button)button.disabled=true;
+   try{
+     const result=await state.db.rpc('grant_reward_mentor_badge',{p_user_id:who,p_note:note});
+     if(result.error)throw result.error;
+     await refresh();
+     status('已授予「'+person.display_name+'」新進夥伴引導員徽章。');
+   }catch(e){status('授予失敗：'+String(e?.message||'請稍後再試').slice(0,200),true)}
+   finally{state.busy=false;if(button&&button.isConnected)button.disabled=false;}
  }
  async function submitVerification(){
    if(!reviewer()||state.busy)return;
@@ -102,13 +134,14 @@
     if(reviewer())tasks.push(
       db.rpc('list_user_point_balances'),
       db.from('cases').select('id,name').order('name').limit(500),
-      db.from('reward_badge_evidence').select('user_id,case_id,category,service_date,verified_at').order('verified_at',{ascending:false}).limit(100)
+      db.from('reward_badge_evidence').select('user_id,case_id,category,service_date,verified_at').order('verified_at',{ascending:false}).limit(100),
+      db.from('reward_user_badges').select('user_id,badge_code').eq('badge_code','mentor').limit(500)
     );
     const results=await Promise.all(tasks);
     if(seq!==state.seq||!authorized())return;
     for(const r of results)if(r.error)throw r.error;
     state.badges=results[0].data||[];state.mine=results[1].data||[];state.progress=results[2].data||[];
-    if(reviewer()){state.people=results[3].data||[];state.cases=results[4].data||[];state.evidence=results[5].data||[];}
+    if(reviewer()){state.people=results[3].data||[];state.cases=results[4].data||[];state.evidence=results[5].data||[];state.mentorAlready=new Set((results[6].data||[]).map(x=>x.user_id));}
     draw();
    }catch(e){if(seq===state.seq)root.innerHTML='<div class="reward-empty">徽章讀取失敗：'+esc(e.message||'請稍後重試')+'。<button id="badgeV3Retry" class="btn alt" type="button">重新載入</button></div>';
     $('badgeV3Retry')?.addEventListener('click',refresh);

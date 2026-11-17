@@ -76,6 +76,7 @@
    $('logoutBtn').addEventListener('click',logout);
    $('casesTab').addEventListener('click',()=>chooseTab('cases'));
    $('rewardsTab').addEventListener('click',()=>chooseTab('rewards'));
+   $('achievementsTab').addEventListener('click',()=>chooseTab('achievements'));
    $('teamPointsTab').addEventListener('click',()=>chooseTab('teamPoints'));
    $('adminTab').addEventListener('click',async()=>{chooseTab('admin');try{await loadAdmin()}catch(e){notify(errText(e),true)}});
    $('reloadAdmin').addEventListener('click',async()=>{try{await loadAdmin();notify('已更新管理資料')}catch(e){notify(errText(e),true)}});
@@ -438,6 +439,7 @@
      window.HandoverRooms?.clearInbox();
      window.HandoverPhotos?.destroy();
      window.Rewards?.destroy();
+     window.BadgeAchievements?.destroy();
      window.TeamPoints?.destroy();
      window.CareWorkspace?.destroy();
      state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
@@ -451,6 +453,7 @@
      window.HandoverRooms?.destroy();
      window.HandoverRooms?.clearInbox();
      window.Rewards?.destroy();
+     window.BadgeAchievements?.destroy();
      window.TeamPoints?.destroy();
      window.CareWorkspace?.destroy();
      state.cases=[];state.records=[];state.reads=[];state.current=null;
@@ -499,23 +502,26 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {state.tab='cases';window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.HandoverPhotos?.destroy();window.Rewards?.destroy();window.TeamPoints?.destroy();window.CareWorkspace?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {state.tab='cases';window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.HandoverPhotos?.destroy();window.Rewards?.destroy();window.BadgeAchievements?.destroy();window.TeamPoints?.destroy();window.CareWorkspace?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
-   if(!['cases','admin','rewards','teamPoints'].includes(tab))return;
+   if(!['cases','admin','rewards','achievements','teamPoints'].includes(tab))return;
    if(tab==='admin'&&!canAdmin())return;
-   if(tab==='rewards'&&!state.profile?.active)return;
+   if((tab==='rewards'||tab==='achievements')&&!state.profile?.active)return;
    if(tab==='teamPoints'&&!['admin','supervisor'].includes(state.profile?.role))return;
    state.tab=tab;
    $('casesPage').hidden=tab!=='cases';
    $('adminPage').hidden=tab!=='admin';
    $('rewardsPage').hidden=tab!=='rewards';
+   $('achievementsPage').hidden=tab!=='achievements';
    $('teamPointsPage').hidden=tab!=='teamPoints';
    $('casesTab').classList.toggle('active',tab==='cases');
    $('adminTab').classList.toggle('active',tab==='admin');
    $('rewardsTab').classList.toggle('active',tab==='rewards');
+   $('achievementsTab').classList.toggle('active',tab==='achievements');
    $('teamPointsTab').classList.toggle('active',tab==='teamPoints');
    if(tab==='rewards')window.Rewards?.show({db:state.db,user:state.user,profile:state.profile});
+   if(tab==='achievements')window.BadgeAchievements?.mount({db:state.db,user:state.user,profile:state.profile});
    if(tab==='teamPoints')window.TeamPoints?.show({db:state.db,user:state.user,profile:state.profile});
    window.CareWorkspace?.syncTab(tab);
  }

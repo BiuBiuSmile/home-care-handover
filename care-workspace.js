@@ -18,7 +18,7 @@
       if(a==='cases')s.callbacks.showBrowser?.();
       if(a==='alerts'){s.callbacks.showBrowser?.();$('careAlertsHub')?.scrollIntoView({behavior:'smooth',block:'start'});}
       if(a==='compose')showQuick();
-      if(a==='rewards')s.callbacks.chooseTab?.('rewards');
+      if(a==='achievements')s.callbacks.chooseTab?.('achievements');
     });
     $('careQuickDismiss')?.addEventListener('click',hideQuick);
     $('careQuickLayer')?.addEventListener('click',e=>{if(e.target===$('careQuickLayer'))hideQuick()});

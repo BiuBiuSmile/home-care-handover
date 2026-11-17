@@ -16,7 +16,7 @@
    const area=node('rewardsNotice');
    if(area){area.hidden=!text;area.textContent=text||'';area.className='reward-notice'+(failed?' error':'');}
  }
- function destroy(){window.BadgeAchievements?.destroy();state.seq++;state.db=null;state.user=null;state.profile=null;state.balance=0;state.catalog=[];state.events=[];state.mine=[];state.pending=[];state.redemptions=[];state.caseNames=new Map();state.reviews=[];state.mission=null;state.badges=[];state.myBadges=[];state.mentorCandidates=[];state.mentorAlready=new Set();state.message=null;state.busy=false;if(node('rewardsRoot'))node('rewardsRoot').innerHTML='';}
+ function destroy(){state.seq++;state.db=null;state.user=null;state.profile=null;state.balance=0;state.catalog=[];state.events=[];state.mine=[];state.pending=[];state.redemptions=[];state.caseNames=new Map();state.reviews=[];state.mission=null;state.badges=[];state.myBadges=[];state.mentorCandidates=[];state.mentorAlready=new Set();state.message=null;state.busy=false;if(node('rewardsRoot'))node('rewardsRoot').innerHTML='';}
  function overview(){
    const balance=Math.max(0,state.balance);
    const goal=state.catalog.length?state.catalog[0]:null;
@@ -131,15 +131,13 @@
    const root=node('rewardsRoot');if(!root)return;
    root.innerHTML='<div class="reward-page">'+overview()+
      '<div id="rewardsNotice" class="reward-notice" role="status" '+(!state.message?.text?'hidden':'')+'>'+
-     esc(state.message?.text||'')+'</div>'+missionPanel()+'<div id="achievementsV3Root"></div>'+prizeCards()+myRedemptions()+eventList()+reviewQueue()+mentorPanel()+adminQueue()+
+     esc(state.message?.text||'')+'</div>'+missionPanel()+prizeCards()+myRedemptions()+eventList()+reviewQueue()+adminQueue()+
      '<p class="reward-fineprint">獎勵機制試行中：此處為點數與兌換申請，無法直接提供電子票券；實際發放由管理員處理。僅計算本機制啟用後經審核的紀錄。</p></div>';
    if(state.message)message(state.message.text,state.message.failed);
-   window.BadgeAchievements?.mount({db:state.db,user:state.user,profile:state.profile});
    node('refreshRewards')?.addEventListener('click',()=>refresh());
    root.querySelectorAll('[data-reward-request]').forEach(b=>b.addEventListener('click',()=>redeem(b.dataset.rewardRequest,b)));
    root.querySelectorAll('[data-handover-review]').forEach(b=>b.addEventListener('click',()=>review(b.dataset.handoverReview,b.dataset.approve==='true',b)));
    root.querySelectorAll('[data-redemption-id]').forEach(b=>b.addEventListener('click',()=>decide(b.dataset.redemptionId,b.dataset.delivered==='true',b)));
-   node('rewardMentorGrant')?.addEventListener('click',grantMentorBadge);
  }
  async function check(result,what){if(result.error)throw Error(what+'：'+errorText(result.error));return result.data||[];}
  async function refresh(){
