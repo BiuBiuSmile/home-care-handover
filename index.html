@@ -8,6 +8,7 @@
 <title>安護交班｜登入與管理平台</title>
 <link rel="stylesheet" href="./case-collab.css">
 <link rel="stylesheet" href="./handover-rooms.css">
+<link rel="stylesheet" href="./handover-photos.css?v=1">
 <style>
 :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#182b3b;background:#f4f7fa}
 *{box-sizing:border-box}body{margin:0;min-height:100vh}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}a{color:#087d75}
@@ -606,7 +607,11 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
   </form>
  </section>
 </div>
-<div id="handoverLayer" class="dialog-layer" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="handoverTitle"><h2 id="handoverTitle">新增交班紀錄</h2><p class="help">紀錄會保存在個案歷程中，只有已授權人員可以查閱。重大異常仍須立即通知督導。</p><form id="handoverForm"><div class="split"><div class="field"><label for="recordKind">交班類型</label><select id="recordKind" required><option>日常照顧</option><option>環境與安全</option><option>生活習慣</option><option>家屬溝通</option><option>異常狀況</option><option>服務調整</option></select></div><div class="field"><label for="recordRisk">重要程度</label><select id="recordRisk" required><option>一般</option><option>提醒</option><option>緊急</option></select></div></div><div class="field"><label for="recordSummary">交班主旨</label><input id="recordSummary" maxlength="100" required></div><div class="field"><label for="recordDescription">交班內容與下次注意事項</label><textarea id="recordDescription" maxlength="2000" minlength="8" required></textarea></div><div class="field"><label for="recordExpires">提醒有效期限（可空白）</label><input id="recordExpires" type="date"></div><label class="help"><input type="checkbox" id="urgentAck" style="min-height:18px;width:18px;vertical-align:middle"> 如屬重大異常，已依機構規定即時通知督導</label><footer><button type="button" class="btn alt" id="cancelRecord">取消</button><button type="submit" class="btn" id="submitRecord">儲存交班</button></footer></form></section></div>
+<div id="handoverLayer" class="dialog-layer" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="handoverTitle"><h2 id="handoverTitle">新增交班紀錄</h2><p class="help">紀錄會保存在個案歷程中，只有已授權人員可以查閱。重大異常仍須立即通知督導。</p><form id="handoverForm"><div class="split"><div class="field"><label for="recordKind">交班類型</label><select id="recordKind" required><option>日常照顧</option><option>環境與安全</option><option>生活習慣</option><option>家屬溝通</option><option>異常狀況</option><option>服務調整</option></select></div><div class="field"><label for="recordRisk">重要程度</label><select id="recordRisk" required><option>一般</option><option>提醒</option><option>緊急</option></select></div></div><div class="field"><label for="recordSummary">交班主旨</label><input id="recordSummary" maxlength="100" required></div><div class="field"><label for="recordDescription">交班內容與下次注意事項</label><textarea id="recordDescription" maxlength="2000" minlength="8" required></textarea></div>
+<div class="field handover-photo-field"><label for="recordPhotos">📷 交班照片（選填，最多 3 張）</label>
+<input id="recordPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+<div id="recordPhotosPreview" class="handover-photo-preview"></div>
+<small>送出前可預覽；照片將壓縮並移除拍攝資訊。僅限個案授權人員查閱。</small></div><div class="field"><label for="recordExpires">提醒有效期限（可空白）</label><input id="recordExpires" type="date"></div><label class="help"><input type="checkbox" id="urgentAck" style="min-height:18px;width:18px;vertical-align:middle"> 如屬重大異常，已依機構規定即時通知督導</label><footer><button type="button" class="btn alt" id="cancelRecord">取消</button><button type="submit" class="btn" id="submitRecord">儲存交班</button></footer></form></section></div>
 <div id="teamPointsDetailLayer" class="tp-detail-layer" role="dialog" aria-modal="true" aria-labelledby="teamPointsDetailTitle" hidden>
  <section class="tp-detail-card">
   <div class="tp-detail-top"><div><small id="teamPointsDetailMeta">員工點數明細</small><h2 id="teamPointsDetailTitle">點數明細</h2></div>
@@ -619,10 +624,11 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="./case-collab.js?v=20261117-rewards" defer></script>
-<script src="./handover-rooms.js?v=20261117-rewards" defer></script>
+<script src="./handover-photos.js?v=1" defer></script>
+<script src="./handover-rooms.js?v=20261117-photos" defer></script>
 <script src="./badge-achievements-v3.js?v=20261117" defer></script>
 <script src="./rewards.js?v=3" defer></script>
 <script src="./team-points.js?v=2" defer></script>
-<script src="./portal.js?v=20261117-case-address-maps" defer></script>
+<script src="./portal.js?v=20261117-handover-photos" defer></script>
 </body>
 </html>
