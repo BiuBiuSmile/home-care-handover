@@ -202,6 +202,17 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 .admin-recovery-card{max-width:480px}
 .admin-recovery-card .help{line-height:1.7}
 @media(max-width:480px){.auth-corner-toggle{top:12px;right:12px;font-size:11px}.auth-card-select .brand{padding-right:103px}}
+
+/* Admin-only staff email-auth migration controls */
+.staff-login-migration{margin-top:24px;padding:18px 20px;border:1px solid #d6e6e3;background:#f7fbfa;border-radius:15px}
+.staff-login-migration h3{margin:0 0 7px;font-size:17px;color:#1e5149}
+.staff-login-migration>p{font-size:13px;line-height:1.7;color:#637d80;margin:0 0 12px}
+.staff-login-migration-status{background:white;border-radius:10px;border:1px solid #dfebea;padding:13px 15px;margin:10px 0;font-size:13px;color:#365a60;line-height:1.65}
+.staff-login-migration-status.error{color:#a04637;background:#fff3f0;border-color:#f5d7cf}
+.staff-login-migration-actions{display:flex;flex-wrap:wrap;gap:10px}
+.staff-login-migration-actions button{min-height:40px}
+@media(max-width:600px){.staff-login-migration{padding:15px}.staff-login-migration-actions{flex-direction:column}.staff-login-migration-actions button{width:100%}}
+
 </style>
 </head>
 <body>
@@ -340,6 +351,17 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
        </table>
       </div>
       <p class="admin-footnote"><span aria-hidden="true">ⓘ</span> 停用可保留帳號供日後重新啟用；刪除不可復原，但既有交班紀錄仍會保留。</p>
+      <section class="staff-login-migration" aria-labelledby="loginMigrationHeading">
+       <h3 id="loginMigrationHeading">手機帳號登入方式轉換（免簡訊）</h3>
+       <p>員工登入畫面不變。只替原有帳號增加內部 Email 登入身分，不刪除帳號、不重設密碼、不更動 User ID 或個案指派。</p>
+       <div id="loginMigrationStatus" class="staff-login-migration-status" role="status" aria-live="polite">按「檢查狀態」核對目前的員工帳號。</div>
+       <div class="staff-login-migration-actions">
+        <button type="button" class="btn alt" id="checkLoginMigration">↻ 檢查狀態</button>
+        <button type="button" class="btn alt" id="pilotLoginMigration" disabled>先轉換 1 位測試</button>
+        <button type="button" class="btn" id="migrateRemainingLogins" disabled>確認測試後轉換其餘人員</button>
+       </div>
+       <p class="admin-footnote">請先確認試點員工能用原手機號碼與原密碼登入，再執行批次轉換。這個步驟需管理員主動確認，且全程由安全的 Supabase 後端處理。</p>
+      </section>
      </section>
 
      <section class="panel admin-panel" id="adminCreateSection">
