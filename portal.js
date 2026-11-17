@@ -125,6 +125,10 @@
    });
    $('assignedList').addEventListener('click',removeAssignment);
    $('handoverForm').addEventListener('submit',saveHandover);
+   $('recordPhotos').addEventListener('change',()=>{
+     try{window.HandoverPhotos?.preview($('recordPhotos'),$('recordPhotosPreview'))}
+     catch(e){notify('照片選取失敗：'+errText(e),true)}
+   });
    $('cancelRecord').addEventListener('click',closeHandover);
    $('handoverLayer').addEventListener('click',e=>{if(e.target===$('handoverLayer'))closeHandover()});
    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeHandover();closeResetPassword();closeDeleteUser()}});
@@ -430,6 +434,7 @@
      window.CareCollab?.destroy();
      window.HandoverRooms?.destroy();
      window.HandoverRooms?.clearInbox();
+     window.HandoverPhotos?.destroy();
      window.Rewards?.destroy();
      window.TeamPoints?.destroy();
      state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
@@ -488,7 +493,7 @@
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.Rewards?.destroy();window.TeamPoints?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.HandoverPhotos?.destroy();window.Rewards?.destroy();window.TeamPoints?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
    if(!['cases','admin','rewards','teamPoints'].includes(tab))return;
@@ -513,7 +518,7 @@
      const db=state.db;
      const [c,r,reads]=await Promise.all([
        db.from('cases').select('id,name,area,service,status,supervisor_name,caregiver_name,address,focus,note,created_at').order('created_at',{ascending:false}),
-       db.from('handovers').select('id,case_id,author_name,kind,risk,summary,description,expires_on,created_at,source_room_id').order('created_at',{ascending:false}).limit(1000),
+       db.from('handovers').select('id,case_id,author_name,kind,risk,summary,description,expires_on,created_at,source_room_id,photo_paths').order('created_at',{ascending:false}).limit(1000),
        db.from('case_reads').select('case_id,read_at').eq('user_id',state.user.id)
      ]);
      state.cases=await checkQuery(c,'讀取個案');
@@ -631,7 +636,7 @@
    const rec=recordsFor(c.id);
    const rlist=rec.map(r=>{
      const badge=r.risk==='一般'?'':('<span class="pill '+(r.risk==='緊急'?'critical':'')+'">'+esc(r.risk)+'</span>');
-     return '<article class="record"><div class="record-head"><strong>'+esc(r.summary)+' '+badge+'</strong><small>'+when(r.created_at)+'</small></div><small>'+esc(r.kind)+(r.source_room_id?'｜48 小時聊天室整理':'')+'｜記錄人：'+esc(r.author_name)+'</small><p>'+esc(r.description)+'</p>'+(r.expires_on?'<small>提醒期限：'+esc(r.expires_on)+'</small>':'')+'</article>';
+     return '<article class="record"><div class="record-head"><strong>'+esc(r.summary)+' '+badge+'</strong><small>'+when(r.created_at)+'</small></div><small>'+esc(r.kind)+(r.source_room_id?'｜48 小時聊天室整理':'')+'｜記錄人：'+esc(r.author_name)+'</small><p>'+esc(r.description)+'</p>'+(window.HandoverPhotos?.markup(r.photo_paths)||'')+(r.expires_on?'<small>提醒期限：'+esc(r.expires_on)+'</small>':'')+'</article>';
    }).join('');
    root.innerHTML=
      '<div class="toolbar care-case-header"><div><h2>'+esc(c.name)+'</h2>'+
@@ -679,6 +684,7 @@
          (isUnread(c)?'<button class="btn alt" id="readCaseBtn" type="button">✓ 我已閱讀正式交班</button>':'<span class="pill ok">最新正式交班已讀</span>')+'</div>'+
        (rlist||'<p class="care-empty">目前尚無正式交班紀錄。</p>')+
      '</section>';
+   window.HandoverPhotos?.hydrate(root,state.db);
    $('newHandoverBtn').addEventListener('click',openHandover);
    if($('readCaseBtn'))$('readCaseBtn').addEventListener('click',markRead);
    if(window.CareCollab){
@@ -689,19 +695,29 @@
         .catch(e=>notify('載入臨時交班室失敗：'+errText(e),true));
    }
  }
- function openHandover(){if(!selectedCase())return;$('handoverForm').reset();$('handoverTitle').textContent='新增交班｜'+selectedCase().name;$('handoverLayer').hidden=false;document.body.style.overflow='hidden';$('recordSummary').focus()}
- function closeHandover(){$('handoverLayer').hidden=true;document.body.style.overflow=''}
+ function openHandover(){if(!selectedCase())return;$('handoverForm').reset();window.HandoverPhotos?.clearPreview($('recordPhotosPreview'));$('handoverTitle').textContent='新增交班｜'+selectedCase().name;$('handoverLayer').hidden=false;document.body.style.overflow='hidden';$('recordSummary').focus()}
+ function closeHandover(){if($('submitRecord').disabled)return;$('handoverLayer').hidden=true;document.body.style.overflow='';window.HandoverPhotos?.clearPreview($('recordPhotosPreview'))}
  async function saveHandover(e){
    e.preventDefault();const c=selectedCase();if(!c)return;
    const risk=$('recordRisk').value;
    if(risk==='緊急'&&!$('urgentAck').checked){notify('重大異常須先通知督導，再勾選確認',true);return}
    const payload={case_id:c.id,kind:$('recordKind').value,risk,summary:$('recordSummary').value.trim(),description:$('recordDescription').value.trim(),expires_on:$('recordExpires').value||null};
    if(!payload.summary||payload.description.length<8){notify('請填寫完整交班主旨與至少 8 字的內容',true);return}
-   const b=$('submitRecord');b.disabled=true;
+   const button=$('submitRecord');button.disabled=true;
+   let photos=[];
    try{
+     photos=await window.HandoverPhotos.uploadSelected({
+       input:$('recordPhotos'),db:state.db,userId:state.user.id,caseId:c.id
+     });
+     payload.photo_paths=photos;
      await checkQuery(await state.db.from('handovers').insert(payload),'儲存交班');
-     closeHandover();await refreshDashboard(false);notify('交班已寫入資料庫，待居督或管理員確認完成後，提交者可獲得 5 點。');
-   }catch(error){notify(errText(error),true)}finally{b.disabled=false}
+     button.disabled=false;closeHandover();
+     await refreshDashboard(false);
+     notify('交班已儲存'+(photos.length?'（含 '+photos.length+' 張照片）':'')+'，待居督或管理員確認。');
+   }catch(error){
+     await window.HandoverPhotos?.removeUnlinked(state.db,photos);
+     notify('交班儲存失敗：'+errText(error),true);
+   }finally{button.disabled=false}
  }
  async function markRead(){
    const c=selectedCase();if(!c)return;
