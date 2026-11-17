@@ -12,7 +12,7 @@
  function initContext(ctx){
    if(!ctx?.db||!ctx.user?.id||!ctx.profile)return false;
    if(state.user?.id!==ctx.user.id){
-     state.people=[];state.loaded=false;state.query='';state.role='all';state.sort='points_desc';state.seq++;
+     closeDetails();state.people=[];state.loaded=false;state.query='';state.role='all';state.sort='points_desc';state.seq++;
    }
    state.db=ctx.db;state.user=ctx.user;state.profile=ctx.profile;
    return allowed();
@@ -100,7 +100,7 @@
    }finally{state.loading=false}
  }
  function show(ctx){
-   if(!initContext(ctx))return;
+   if(!initContext(ctx)){destroy();return}
    refresh();
  }
  function closeDetails(){
@@ -109,7 +109,8 @@
    const body=$('teamPointsDetailEvents');if(body)body.innerHTML='';
  }
  async function openUser(ctx,id){
-   if(!initContext(ctx)||!id)return;
+   if(!initContext(ctx)){destroy();return}
+   if(!id)return;
    if(!state.loaded){
      const {data,error}=await state.db.rpc('list_user_point_balances');
      if(error)return;
