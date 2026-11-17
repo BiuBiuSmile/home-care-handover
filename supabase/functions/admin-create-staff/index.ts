@@ -153,6 +153,10 @@ Deno.serve(async (req: Request) => {
       if (role !== "staff" && role !== "supervisor") return reply(400, "只能新增居服員或居督");
       const issue = passwordError(password, phone);
       if (issue) return reply(400, issue);
+      const { data: duplicate, error: lookupIssue } = await db.from("profiles")
+        .select("id").eq("login_phone", phone.slice(1)).maybeSingle();
+      if (lookupIssue) return reply(500, "目前無法檢查手機帳號是否重複");
+      if (duplicate) return reply(409, "這個手機號碼已經建立員工帳號");
 
       const { data: created, error: createError } = await db.auth.admin.createUser({
         email:staffEmail(phone),
@@ -163,14 +167,14 @@ Deno.serve(async (req: Request) => {
       if (createError || !created.user) {
         return reply(409, "帳號建立失敗：員工手機帳號可能已被使用，或密碼不符合 Supabase 設定");
       }
-      const { error: profileError } = await db.from("profiles").update({
+      const { data: savedProfile, error: profileError } = await db.from("profiles").update({
         display_name: name,
         role,
         active: true,
         must_change_password: false,
         login_phone:phone.slice(1),
-      }).eq("id", created.user.id);
-      if (profileError) {
+      }).eq("id", created.user.id).select("id").single();
+      if (profileError || !savedProfile) {
         // Fail closed. on_user_registered defaults the profile to inactive.
         return reply(500, "登入帳號已建立，但權限設定未成功；請管理員查核後再啟用");
       }
