@@ -1,0 +1,18 @@
+/* Private handover photo UI */
+.handover-photo-field{display:flex;flex-direction:column;gap:7px;margin:12px 0}
+.handover-photo-field label{font-size:13px;font-weight:800;color:#42616e}
+.handover-photo-field input[type=file]{font-size:13px;max-width:100%;border:1px dashed #adcfc9;background:#f6fcfa;border-radius:12px;padding:11px;min-height:46px}
+.handover-photo-field small,.handover-photo-preview small{font-size:11px;color:#6e8790;line-height:1.65}
+.handover-photo-preview-list,.handover-photo-attachments{display:flex;gap:10px;flex-wrap:wrap;margin-top:7px}
+.handover-photo-preview-item{width:96px;display:flex;flex-direction:column;gap:4px;align-items:center}
+.handover-photo-preview-item img{width:92px;height:92px;object-fit:cover;border-radius:12px;border:1px solid #c9dadf}
+.handover-photo-preview-item span{font-size:11px;color:#6f858b}
+.handover-photo-thumb{width:114px;height:105px;padding:4px;border:1px solid #cbdde1;border-radius:12px;background:#eef6f5;display:grid;place-items:center;cursor:zoom-in;overflow:hidden}
+.handover-photo-thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.handover-photo-thumb:hover{border-color:#008b7e;box-shadow:0 3px 12px rgba(24,92,84,.12)}
+.handover-photo-loading{font-size:12px;color:#617e87;overflow-wrap:anywhere}
+.handover-photo-dialog{border:0;border-radius:16px;padding:14px;background:#11242d;box-shadow:0 18px 60px #0005;color:#fff;max-width:96vw;max-height:92vh}
+.handover-photo-dialog::backdrop{background:rgba(8,21,30,.85)}
+.handover-photo-dialog img{display:block;max-width:90vw;max-height:78vh;object-fit:contain;min-width:120px}
+.handover-photo-close{display:block;margin:0 0 10px auto;background:#eaf4f0;border:0;border-radius:9px;padding:8px 13px;color:#14554c;cursor:pointer;font-weight:800}
+@media(max-width:640px){.handover-photo-thumb{width:88px;height:88px}.handover-photo-dialog{padding:9px}}
