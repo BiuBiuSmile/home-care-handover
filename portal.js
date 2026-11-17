@@ -27,6 +27,18 @@
  function errText(error){return (error && error.message) ? error.message : String(error || '操作失敗');}
  function canAdmin(){return state.profile && state.profile.role==='admin' && state.profile.active;}
  function selectedCase(){return state.cases.find(x=>x.id===state.current);}
+ function caseMapUrl(address){
+   const value=String(address||'').trim();
+   return value?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(value):'';
+ }
+ function renderCaseAddress(c){
+   const address=String(c.address||'').trim();
+   if(!address)return '<div class="case-address-row empty"><span class="case-address-label">📍 個案地址：</span><span>尚未設定</span></div>';
+   const link=esc(caseMapUrl(address));
+   return '<div class="case-address-row"><span class="case-address-label">📍 個案地址：</span>'+
+     '<a class="case-address-link" href="'+link+'" target="_blank" rel="noopener noreferrer" title="在 Google 地圖搜尋此地址" aria-label="在 Google 地圖開啟個案地址：'+esc(address)+'">'+
+     esc(address)+' <span aria-hidden="true">↗</span></a></div>';
+ }
  async function checkQuery(result,action){
    if(result.error)throw new Error(action+'：'+errText(result.error));
    return result.data;
@@ -500,7 +512,7 @@
    try{
      const db=state.db;
      const [c,r,reads]=await Promise.all([
-       db.from('cases').select('id,name,area,service,status,supervisor_name,caregiver_name,focus,note,created_at').order('created_at',{ascending:false}),
+       db.from('cases').select('id,name,area,service,status,supervisor_name,caregiver_name,address,focus,note,created_at').order('created_at',{ascending:false}),
        db.from('handovers').select('id,case_id,author_name,kind,risk,summary,description,expires_on,created_at,source_room_id').order('created_at',{ascending:false}).limit(1000),
        db.from('case_reads').select('case_id,read_at').eq('user_id',state.user.id)
      ]);
@@ -624,7 +636,7 @@
    root.innerHTML=
      '<div class="toolbar care-case-header"><div><h2>'+esc(c.name)+'</h2>'+
      '<div class="help">'+esc(c.id)+' · '+esc(c.area)+'｜'+esc(c.service)+'</div>'+
-     '<div class="help">服務狀態：'+esc(c.status||'未設定')+'｜主責督導：'+esc(c.supervisor_name||'未設定')+'｜主責居服員：'+esc(c.caregiver_name||'未設定')+'</div></div>'+
+     '<div class="help">服務狀態：'+esc(c.status||'未設定')+'｜主責督導：'+esc(c.supervisor_name||'未設定')+'｜主責居服員：'+esc(c.caregiver_name||'未設定')+'</div>'+renderCaseAddress(c)+'</div>'+
      '<span class="care-case-hint">已指派的人員可共同交班</span></div>'+
      '<div class="care-tabs" role="tablist" aria-label="個案交班功能">'+
        '<button class="care-tab active" data-care-tab="guide" role="tab" aria-selected="true" type="button">照顧檔案</button>'+
@@ -830,7 +842,7 @@
  function focusToText(arr){return (Array.isArray(arr)?arr:[]).map(x=>Array.isArray(x)?x.join(' | '):[x.title,x.body].join(' | ')).join('\n')}
  async function saveCase(e){
    e.preventDefault();if(!canAdmin())return;
-   const payload={id:$('manageCaseId').value.trim(),name:$('manageCaseName').value.trim(),area:$('manageArea').value.trim(),service:$('manageService').value.trim(),status:$('manageStatus').value,supervisor_name:$('manageSupervisorName').value.trim(),caregiver_name:$('manageCaregiverName').value.trim(),focus:focusFromText($('manageFocus').value),note:$('manageNote').value.trim()};
+   const payload={id:$('manageCaseId').value.trim(),name:$('manageCaseName').value.trim(),area:$('manageArea').value.trim(),service:$('manageService').value.trim(),address:$('manageCaseAddress').value.trim(),status:$('manageStatus').value,supervisor_name:$('manageSupervisorName').value.trim(),caregiver_name:$('manageCaregiverName').value.trim(),focus:focusFromText($('manageFocus').value),note:$('manageNote').value.trim()};
    const btn=$('saveCaseBtn');btn.disabled=true;
    try{
      if(state.editing){
@@ -852,7 +864,7 @@
    const c=state.cases.find(x=>x.id===id);if(!c)return;
    state.editing=id;
    $('manageCaseId').value=c.id;$('manageCaseId').readOnly=true;
-   $('manageCaseName').value=c.name;$('manageArea').value=c.area;
+   $('manageCaseName').value=c.name;$('manageArea').value=c.area;$('manageCaseAddress').value=c.address||'';
    $('manageService').value=c.service;$('manageStatus').value=c.status||'服務中';$('manageSupervisorName').value=c.supervisor_name||'';$('manageCaregiverName').value=c.caregiver_name||'';$('manageFocus').value=focusToText(c.focus);
    $('manageNote').value=c.note;$('saveCaseBtn').textContent='儲存修改';
    $('caseEditMode').textContent='編輯模式 · '+c.name;$('caseEditMode').classList.add('editing');
