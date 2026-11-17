@@ -25,6 +25,11 @@ function normalizePhone(value: unknown) {
   return null;
 }
 
+// Auth aliases are under the site's own domain, never real staff mailboxes.
+const INTERNAL_EMAIL_DOMAIN = "staff-login.chkia.dev";
+function staffEmail(phone: string) {
+  return "u" + phone.replace(/[^0-9]/g, "") + "@" + INTERNAL_EMAIL_DOMAIN;
+}
 function passwordError(value: unknown, phone?: string | null): string | null {
   if (typeof value !== "string") return "請輸入密碼";
   if (value.length < 10 || value.length > 72) return "密碼長度須為 10～72 字元";
@@ -67,6 +72,76 @@ Deno.serve(async (req: Request) => {
     }
 
     const action = String(payload.action ?? "create");
+    // Read-only status and separately confirmed migration, administrator only.
+    if (action === "migration_status" || action === "migrate_logins") {
+      const { data: people, error: peopleError } = await db.from("profiles")
+        .select("id,display_name,role,login_phone")
+        .in("role", ["staff","supervisor"])
+        .order("id", { ascending:true }).limit(500);
+      if (peopleError || !people) return reply(500,"無法核對員工帳號狀態");
+      const rows = await Promise.all(people.map(async (p) => {
+        const { data: record, error } = await db.auth.admin.getUserById(p.id);
+        if (error || !record?.user) return { id:p.id, state:"error", name:p.display_name, last4:"" };
+        const u = record.user;
+        const phone = normalizePhone(p.login_phone || u.phone);
+        const alias = phone ? staffEmail(phone) : "";
+        const last4 = phone?.slice(-4) || "";
+        const hasEmailIdentity = (u.identities || []).some(
+          (i) => i.provider === "email"
+        );
+        if (!phone || !alias) return { id:p.id, state:"invalid_phone", name:p.display_name, last4 };
+        if (u.email && u.email.toLowerCase() !== alias) {
+          return { id:p.id, state:"conflict", name:p.display_name, last4 };
+        }
+        if (u.email?.toLowerCase() === alias && !!u.email_confirmed_at && hasEmailIdentity) {
+          return { id:p.id, state:"converted", name:p.display_name, last4 };
+        }
+        return { id:p.id, state:"pending", name:p.display_name, last4, alias };
+      }));
+      const count = (type: string) => rows.filter((x)=>x.state===type).length;
+      const candidates = rows.filter((x)=>x.state==="pending");
+      const summary = () => ({
+        total:rows.length,
+        converted:count("converted"),
+        pending:count("pending"),
+        errors:count("error")+count("invalid_phone")+count("conflict"),
+        pilot:candidates.length ? { name:candidates[0].name, last4:candidates[0].last4 } : null,
+      });
+      if (action === "migration_status") return reply(200,"已取得員工登入方式狀態",summary());
+      if (String(payload.confirm || "") !== "轉換員工登入") {
+        return reply(400,"必須明確確認「轉換員工登入」");
+      }
+      if (summary().errors) return reply(409,"有帳號不符，為安全起見停止批次轉換",summary());
+      const batch = payload.pilot === true ? candidates.slice(0,1) : candidates;
+      let changed = 0;
+      for (const row of batch) {
+        if (!row.alias) continue;
+        // Update existing user, do NOT create a new user / reset password / change ID.
+        const { data: updated, error } = await db.auth.admin.updateUserById(
+          row.id, { email: row.alias, email_confirm:true }
+        );
+        if (error || updated.user?.id !== row.id) {
+          return reply(409,"部分帳號已轉換，但有更新失敗；請重新檢查狀態",
+            { changed, failed_user_suffix:row.id.slice(-6) });
+        }
+        const { data: verified, error: verifyError } = await db.auth.admin.getUserById(row.id);
+        const verifiedIdentity = (verified?.user?.identities || []).some(
+          (i) => i.provider === "email"
+        );
+        if (verifyError || !verified?.user || verified.user.email?.toLowerCase() !== row.alias
+            || !verified.user.email_confirmed_at || !verifiedIdentity) {
+          return reply(409,"Email 已寫入，但確認身分尚未完成，請停止並核對",
+            { changed, failed_user_suffix:row.id.slice(-6) });
+        }
+        changed++;
+      }
+      return reply(200, payload.pilot === true
+        ? "已完成 1 位測試帳號的 Email 登入身分轉換；請先驗證原密碼再處理其他員工"
+        : "已完成員工登入身分轉換",
+        { changed, converted:count("converted")+changed, total:rows.length,
+          remaining:Math.max(0,candidates.length-changed) });
+    }
+
     // Do not log or return passwords. Supabase Auth stores only password hashes.
     const password = payload.password;
     if (action === "create") {
@@ -80,19 +155,20 @@ Deno.serve(async (req: Request) => {
       if (issue) return reply(400, issue);
 
       const { data: created, error: createError } = await db.auth.admin.createUser({
-        phone,
-        phone_confirm: true,
+        email:staffEmail(phone),
+        email_confirm:true,
         password,
         user_metadata: { display_name: name },
       });
       if (createError || !created.user) {
-        return reply(409, "帳號建立失敗：手機號碼可能已被使用，或密碼不符合 Supabase 設定");
+        return reply(409, "帳號建立失敗：員工手機帳號可能已被使用，或密碼不符合 Supabase 設定");
       }
       const { error: profileError } = await db.from("profiles").update({
         display_name: name,
         role,
         active: true,
         must_change_password: false,
+        login_phone:phone.slice(1),
       }).eq("id", created.user.id);
       if (profileError) {
         // Fail closed. on_user_registered defaults the profile to inactive.
@@ -112,13 +188,13 @@ Deno.serve(async (req: Request) => {
       if (id === signedIn.user.id) return reply(403, "不能透過此功能變更自己的管理員密碼");
 
       const { data: target, error: targetError } = await db.from("profiles")
-        .select("role,active").eq("id", id).maybeSingle();
+        .select("role,active,login_phone").eq("id", id).maybeSingle();
       if (targetError || !target || !["staff", "supervisor"].includes(target.role)) {
         return reply(403, "只能重設居服員或居督的密碼");
       }
       const { data: authUser, error: lookupError } = await db.auth.admin.getUserById(id);
       if (lookupError || !authUser.user) return reply(404, "員工登入帳號不存在");
-      const issue = passwordError(password, authUser.user.phone);
+      const issue = passwordError(password, normalizePhone(target.login_phone || authUser.user.phone));
       if (issue) return reply(400, issue);
       const { error: updateError } = await db.auth.admin.updateUserById(id, { password });
       if (updateError) return reply(400, "密碼更新失敗，請確認密碼符合系統設定");
