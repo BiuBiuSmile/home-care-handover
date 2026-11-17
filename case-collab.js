@@ -169,7 +169,7 @@
       if(error)throw error;
       if(!data?.length)throw Error('此項目已處理或您未獲授權，請重新整理。');
       await loadGuide();
-      setNotice(status==='approved'?'已審核通過，其他獲授權同仁可看到正式照顧重點。':'已將此提案退回，原始提案保留。');
+      setNotice(status==='approved'?'已審核通過，已符合獎勵規則的提交者獲得 5 點，其他獲授權同仁可看到正式照顧重點。':'已將此提案退回，不計點；原始提案保留。');
     }catch(err){setNotice('審核失敗：'+errorText(err),true)}
     finally{button.disabled=false}
   }
