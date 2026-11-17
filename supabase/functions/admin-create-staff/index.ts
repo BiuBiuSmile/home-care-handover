@@ -139,7 +139,9 @@ Deno.serve(async (req: Request) => {
         ? "已完成 1 位測試帳號的 Email 登入身分轉換；請先驗證原密碼再處理其他員工"
         : "已完成員工登入身分轉換",
         { changed, converted:count("converted")+changed, total:rows.length,
-          remaining:Math.max(0,candidates.length-changed) });
+          remaining:Math.max(0,candidates.length-changed),
+          test_user: payload.pilot===true && batch[0]
+            ? { name:batch[0].name, last4:batch[0].last4 } : null });
     }
 
     // Do not log or return passwords. Supabase Auth stores only password hashes.
