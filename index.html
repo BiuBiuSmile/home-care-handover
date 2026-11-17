@@ -214,6 +214,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 @media(max-width:600px){.staff-login-migration{padding:15px}.staff-login-migration-actions{flex-direction:column}.staff-login-migration-actions button{width:100%}}
 
 </style>
+<link rel="stylesheet" href="./rewards.css?v=1">
 </head>
 <body>
 <section class="auth-shell" id="authScreen">
@@ -269,7 +270,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <section id="appScreen" hidden>
  <header class="topbar"><div class="brand"><span class="logo">護</span> <div>安護交班<div><small>個案交班資訊中心</small></div></div></div><div class="action-inline"><span id="identity"></span><button class="btn" type="button" id="logoutBtn">登出</button></div></header>
  <main class="page">
-  <div class="navtabs"><button class="active" type="button" id="casesTab">交班工作台</button><button type="button" id="adminTab" hidden>管理員後台</button></div>
+  <div class="navtabs"><button class="active" type="button" id="casesTab">交班工作台</button><button type="button" id="adminTab" hidden>管理員後台</button><button type="button" id="rewardsTab">點數獎勵</button></div>
   <section id="casesPage">
    <section id="tempInboxPanel" class="panel temp-inbox-panel" hidden aria-label="收到的臨時交班邀請">
     <div class="temp-inbox-head"><div><h2>受邀臨時交班</h2><p>搜尋你收到邀請的個案，直接進入 A 建立的 48 小時交班室，無須等待居督指派。</p></div><span id="tempInboxCount" class="temp-pill live">0 間進行中</span></div>
@@ -310,6 +311,9 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
     <div class="focus-nav"><button type="button" class="btn alt" id="backToCases">← 返回個案總覽</button><span id="caseFocusPath" class="help"></span></div>
     <section class="panel case-detail-panel" id="caseDetail"><p class="muted">選擇個案即可查看交班資訊。</p></section>
    </div>
+  </section>
+  <section id="rewardsPage" hidden>
+   <div id="rewardsRoot" class="rewards-root"><div class="reward-empty">載入點數資訊中…</div></div>
   </section>
   <section id="adminPage" hidden>
    <div class="admin-shell">
@@ -495,6 +499,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="./case-collab.js" defer></script>
 <script src="./handover-rooms.js" defer></script>
-<script src="./portal.js?v=20261117-primary-assignment-sync" defer></script>
+<script src="./rewards.js?v=1" defer></script>
+<script src="./portal.js?v=20261117-rewards-v1" defer></script>
 </body>
 </html>
