@@ -360,7 +360,11 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
         <button type="button" class="btn alt" id="pilotLoginMigration" disabled>先轉換 1 位測試</button>
         <button type="button" class="btn" id="migrateRemainingLogins" disabled>確認測試後轉換其餘人員</button>
        </div>
-       <p class="admin-footnote">請先確認試點員工能用原手機號碼與原密碼登入，再執行批次轉換。這個步驟需管理員主動確認，且全程由安全的 Supabase 後端處理。</p>
+       <label class="admin-footnote" style="display:flex;align-items:flex-start;gap:8px;margin:12px 0;">
+        <input type="checkbox" id="confirmPilotLogin" style="margin-top:4px;">
+        我已確認試點員工可用原手機號碼及原密碼成功登入，且原個案權限正常。
+       </label>
+       <p class="admin-footnote">未完成上方登入驗證前，不可批次轉換其餘人員。本作業需已登入的管理員授權，並由 Supabase 後端執行。</p>
       </section>
      </section>
 
