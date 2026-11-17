@@ -61,6 +61,7 @@
    $('pendingLogout').addEventListener('click',logout);
    $('logoutBtn').addEventListener('click',logout);
    $('casesTab').addEventListener('click',()=>chooseTab('cases'));
+   $('rewardsTab').addEventListener('click',()=>chooseTab('rewards'));
    $('adminTab').addEventListener('click',async()=>{chooseTab('admin');try{await loadAdmin()}catch(e){notify(errText(e),true)}});
    $('reloadAdmin').addEventListener('click',async()=>{try{await loadAdmin();notify('已更新管理資料')}catch(e){notify(errText(e),true)}});
    $('adminUserSearch').addEventListener('input',renderUsers);
@@ -409,6 +410,7 @@
      window.CareCollab?.destroy();
      window.HandoverRooms?.destroy();
      window.HandoverRooms?.clearInbox();
+     window.Rewards?.destroy();
      state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];
      state.current=null;state.caseOpen=false;state.casePage=1;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -418,6 +420,7 @@
      window.CareCollab?.destroy();
      window.HandoverRooms?.destroy();
      window.HandoverRooms?.clearInbox();
+     window.Rewards?.destroy();
      state.cases=[];state.records=[];state.reads=[];state.current=null;
      state.caseOpen=false;state.casePage=1;state.browserScroll=0;
      $('caseBrowser').hidden=false;$('caseFocus').hidden=true;
@@ -454,20 +457,27 @@
      $('identity').textContent=state.profile.display_name+'｜'+(roles[state.profile.role]||state.profile.role);
      $('adminTab').hidden=!canAdmin();
      await refreshDashboard(false);show('appScreen');
+     chooseTab('cases');
    }catch(e){notify(errText(e),true);show('authScreen')}
  }
  async function logout(){
    if(!state.db)return;
    const r=await state.db.auth.signOut();
    if(r.error)notify(errText(r.error),true);
-   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
+   else {window.CareCollab?.destroy();window.HandoverRooms?.destroy();window.HandoverRooms?.clearInbox();window.Rewards?.destroy();state.user=null;state.profile=null;state.cases=[];state.records=[];state.reads=[];state.current=null;state.caseOpen=false;closeDeleteUser();closeResetPassword();$('provisionForm').reset();show('authScreen');notify('已登出')}
  }
  function chooseTab(tab){
+   if(!['cases','admin','rewards'].includes(tab))return;
    if(tab==='admin'&&!canAdmin())return;
+   if(tab==='rewards'&&!state.profile?.active)return;
    state.tab=tab;
-   $('casesPage').hidden=tab!=='cases';$('adminPage').hidden=tab!=='admin';
+   $('casesPage').hidden=tab!=='cases';
+   $('adminPage').hidden=tab!=='admin';
+   $('rewardsPage').hidden=tab!=='rewards';
    $('casesTab').classList.toggle('active',tab==='cases');
    $('adminTab').classList.toggle('active',tab==='admin');
+   $('rewardsTab').classList.toggle('active',tab==='rewards');
+   if(tab==='rewards')window.Rewards?.show({db:state.db,user:state.user,profile:state.profile});
  }
  async function refreshDashboard(message=true){
    if(!state.profile?.active)return;
@@ -662,7 +672,7 @@
    const b=$('submitRecord');b.disabled=true;
    try{
      await checkQuery(await state.db.from('handovers').insert(payload),'儲存交班');
-     closeHandover();await refreshDashboard(false);notify('交班已寫入資料庫，其他已指派人員可讀取');
+     closeHandover();await refreshDashboard(false);notify('交班已寫入資料庫，待居督或管理員確認完成後，提交者可獲得 5 點。');
    }catch(error){notify(errText(error),true)}finally{b.disabled=false}
  }
  async function markRead(){
