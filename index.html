@@ -439,6 +439,16 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
        <div class="admin-form-actions"><button class="btn" type="submit">＋ 指派服務人員</button></div>
       </form>
       <div id="assignedList" class="admin-assigned-list scroll-table"></div>
+      <section class="staff-login-migration" aria-labelledby="primarySyncTitle">
+       <h3 id="primarySyncTitle">主責居服員個案權限核對</h3>
+       <p>匯入的「主責居服員姓名」只是文字，不會自動開放個案。可先預覽並比對已啟用員工姓名，再由管理員決定是否同步正式指派。</p>
+       <div id="primarySyncStatus" class="staff-login-migration-status" role="status" aria-live="polite">按「預覽主責指派」核對現有個案權限。</div>
+       <div class="staff-login-migration-actions">
+        <button type="button" class="btn alt" id="previewPrimarySync">↻ 預覽主責指派</button>
+        <button type="button" class="btn" id="applyPrimarySync" disabled>確認並同步無衝突主責指派</button>
+       </div>
+       <p class="admin-footnote">僅同步「姓名完全相同、員工名稱唯一、沒有其他居服員指派衝突」的個案；不清除既有指派。姓名不符或指派衝突須人工核對。</p>
+      </section>
      </section>
     </div>
    </div>
