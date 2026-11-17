@@ -213,6 +213,17 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 .staff-login-migration-actions button{min-height:40px}
 @media(max-width:600px){.staff-login-migration{padding:15px}.staff-login-migration-actions{flex-direction:column}.staff-login-migration-actions button{width:100%}}
 
+/* Personal service addresses are shown only in the authorized case detail view. */
+.case-address-field{grid-column:1/-1}
+.case-address-field input{width:100%;min-height:44px}
+.case-address-field .help{font-size:12px;line-height:1.6;color:#768c98}
+.case-address-row{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px;margin-top:9px;font-size:13px;line-height:1.7;color:#52727b}
+.case-address-row.empty{color:#8a9ca5}
+.case-address-label{font-weight:800;color:#43646b}
+.case-address-link{color:#087b70;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;font-weight:750}
+.case-address-link:hover{color:#07594f}
+.case-address-link:focus-visible{outline:2px solid #1c9687;outline-offset:3px;border-radius:3px}
+@media(max-width:600px){.case-address-row{font-size:12px;gap:2px}.case-address-field{grid-column:1/-1}}
 </style>
 <link rel="stylesheet" href="./team-points.css?v=1">
 <link rel="stylesheet" href="./rewards.css?v=1">
@@ -418,6 +429,10 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
          <div class="field"><label for="manageCaseName">個案顯示名稱 <span class="required-dot">*</span></label><input id="manageCaseName" required maxlength="100" placeholder="輸入個案顯示名稱"></div>
          <div class="field"><label for="manageArea">服務區域</label><input id="manageArea" maxlength="100" placeholder="例如 台中市太平區"></div>
          <div class="field"><label for="manageService">服務項目</label><input id="manageService" maxlength="150" placeholder="例如 居家服務、喘息服務"></div>
+         <div class="field case-address-field"><label for="manageCaseAddress">個案服務地址（選填）</label>
+          <input id="manageCaseAddress" maxlength="300" autocomplete="off" placeholder="例如：臺中市太平區○○路○號">
+          <small class="help">只有具備個案權限的同仁可看到地址；點擊地址時才會開啟 Google 地圖。</small>
+         </div>
         </div>
        </div>
        <div class="admin-form-section">
@@ -521,6 +536,6 @@ table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:11px 8px;
 <script src="./handover-rooms.js?v=20261117-rewards" defer></script>
 <script src="./rewards.js?v=1" defer></script>
 <script src="./team-points.js?v=2" defer></script>
-<script src="./portal.js?v=20261117-team-points-2" defer></script>
+<script src="./portal.js?v=20261117-case-address-maps" defer></script>
 </body>
 </html>
