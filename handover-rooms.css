@@ -91,3 +91,22 @@
 .temp-published{background:#eaf8f1;color:#17684c;border:1px solid #cde9db;padding:15px;border-radius:12px;margin-top:20px;font-size:13px;line-height:1.6}
 .temp-create-grid input[readonly]{background:#eef4f3;color:#416e70}
 @media(max-width:760px){.temp-inbox-panel,.temp-inbox-workspace{padding:15px}.temp-inbox-list{grid-template-columns:1fr}.temp-inbox-head{align-items:flex-start}.temp-inbox-search{max-width:none}.temp-summary button{align-self:stretch;width:100%}}
+
+/* Temporary invite-only case reference; no permanent case assignment or browser storage. */
+.temp-case-brief{margin:16px 0;border:1px solid #c2ded7;border-radius:14px;background:#f6fbf9;padding:17px;}
+.temp-case-brief-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0 0 13px;}
+.temp-case-brief-head h4{font-size:16px;font-weight:800;color:#155e55;margin:0;}
+.temp-case-brief-head small{font-size:12px;color:#5a847c;}
+.temp-brief-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.temp-brief-field{padding:11px 13px;background:white;border:1px solid #e1ece8;border-radius:9px;min-width:0;overflow-wrap:anywhere;}
+.temp-brief-field span{display:block;color:#677f89;font-size:12px;margin-bottom:4px;}
+.temp-brief-field strong{display:block;color:#264955;font-size:14px;line-height:1.6;font-weight:700;white-space:pre-wrap;}
+.temp-case-brief h5{font-size:14px;margin:18px 0 8px;color:#21535b;}
+.temp-brief-grid{display:grid;grid-template-columns:1fr;gap:9px;}
+.temp-brief-item{background:#fff;border:1px solid #dceae7;padding:12px 14px;border-radius:10px;}
+.temp-brief-item strong{font-size:13px;color:#24675e;}
+.temp-brief-item p{margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere;color:#344f59;font-size:14px;line-height:1.75;}
+.temp-brief-item small{font-size:11px;color:#779094;}
+.temp-brief-empty{padding:12px;border-radius:9px;background:#ecf3f3;color:#63808a;font-size:13px;line-height:1.7;}
+.temp-brief-warning{margin:14px 0 0;padding:11px 12px;border-left:3px solid #92bfaf;background:#ecf8f3;color:#467269;font-size:12px;line-height:1.6;}
+@media(max-width:660px){.temp-case-brief{padding:13px}.temp-brief-fields{grid-template-columns:1fr}.temp-case-brief-head{flex-direction:column;align-items:flex-start}}

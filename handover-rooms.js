@@ -52,6 +52,7 @@
        '<div class="temp-detail-nav"><button id="tempBack" type="button" class="btn alt">← '+(s.mode==='inbox'?'返回受邀交班清單':'返回此個案交班室')+'</button><span id="tempStatus"></span></div>',
        '<div class="temp-room-heading"><div><h3 id="tempRoomTitle"></h3><p id="tempMembers"></p></div><div class="temp-countdown"><small>距離 48 小時到期</small><strong id="tempTime">--:--:--</strong></div></div>',
        '<div class="temp-closed" id="tempClosed" hidden>交班室已到期並轉為唯讀。歷史訊息保留，由居督或管理員整理正式交班。</div>',
+       '<section id="tempCaseBrief" class="temp-case-brief" hidden><div class="temp-case-brief-head"><h4>📋 個案資料與照顧重點</h4><small>僅限本次有效交班室 A、B 查閱</small></div><div id="tempCaseBriefContent"></div></section>',
        '<div class="temp-messages" id="tempMessages"><p class="temp-empty">載入訊息中…</p></div>',
        '<form id="tempChatForm" class="temp-chat" hidden>',
          '<label for="tempBody">交班文字</label><textarea id="tempBody" rows="4" minlength="2" maxlength="3000" required placeholder="說明代班注意事項、服務方式，或向 A 詢問問題…"></textarea>',
@@ -73,7 +74,7 @@
    $('tempRoomList').addEventListener('click',e=>{const b=e.target.closest('[data-open-room]');if(b)openRoom(b.dataset.openRoom)});
    $('tempBack').addEventListener('click',()=>{
      if(s.mode==='inbox'){exitInbox();return}
-     s.roomId=null;s.messages=[];renderList();
+     s.roomId=null;s.messages=[];clearCaseBrief();renderList();
    });
    $('tempChatForm').addEventListener('submit',send);
    $('tempPhotos').addEventListener('change',()=>{
@@ -115,7 +116,7 @@
    if(seq!==s.seq||mode!==s.mode)return;
    if(error)throw error;
    s.rooms=data||[];
-   if(s.roomId&&!current()){s.roomId=null;s.messages=[];notify('交班室已到期或不再有查閱權限。',true)}
+   if(s.roomId&&!current()){s.roomId=null;s.messages=[];clearCaseBrief();notify('交班室已到期或不再有查閱權限。',true)}
    renderList();
    if(s.roomId)drawHeader();
  }
@@ -130,6 +131,73 @@
      '<div class="temp-card-foot"><small>'+fmt(r.created_at)+'</small><b>'+(open(r)?'剩餘 '+remains(r):'查看歷史')+' ›</b></div></button>'
    ).join('')||'<p class="temp-empty">目前沒有可查看的交班室。</p>';
  }
+ function clearCaseBrief(){
+   const panel=$('tempCaseBrief'),content=$('tempCaseBriefContent');
+   if(panel)panel.hidden=true;
+   if(content)content.textContent='';
+ }
+ function briefField(label,value){
+   const v=String(value??'').trim();
+   return v?'<div class="temp-brief-field"><span>'+esc(label)+'</span><strong>'+esc(v)+'</strong></div>':'';
+ }
+ function briefItem(title,detail,byline=''){
+   const body=String(detail??'').trim();
+   if(!body)return '';
+   const heading=String(title??'').trim();
+   return '<article class="temp-brief-item">'+(heading?'<strong>'+esc(heading)+'</strong>':'')+
+     '<p>'+esc(body)+'</p>'+(byline?'<small>'+esc(byline)+'</small>':'')+'</article>';
+ }
+ function renderCaseBrief(data){
+   const panel=$('tempCaseBrief'),content=$('tempCaseBriefContent');
+   if(!panel||!content)return;
+   const c=data?.case,guides=Array.isArray(data?.guides)?data.guides:[];
+   if(!c){clearCaseBrief();return;}
+   const fields=[
+     briefField('個案姓名',c.name),briefField('服務狀態',c.status),
+     briefField('服務區域',c.area),briefField('服務項目',c.service),
+     briefField('服務地址',c.address),briefField('主責督導',c.supervisor_name),
+     briefField('主責居服員',c.caregiver_name)
+   ].filter(Boolean).join('');
+   const fixed=(Array.isArray(c.focus)?c.focus:[]).map(x=>
+     briefItem(Array.isArray(x)?x[0]:x?.title,Array.isArray(x)?x[1]:x?.body)
+   ).filter(Boolean);
+   if(String(c.note||'').trim())fixed.push(briefItem('個案重要提醒',c.note));
+   const approved=guides.map(x=>
+     briefItem(x.category==='其他'&&x.title==='照顧重點'?'':x.title,x.detail,
+       '已確認照顧重點'+(x.author_name?' · 提出者：'+x.author_name:''))
+   ).filter(Boolean);
+   content.innerHTML='<div class="temp-brief-fields">'+fields+'</div>'+
+     '<h5>既有照顧資訊與提醒</h5>'+
+     (fixed.length?'<div class="temp-brief-grid">'+fixed.join('')+'</div>':'<p class="temp-brief-empty">目前沒有額外的固定照顧資訊。</p>')+
+     '<h5>居督／管理員已確認的照顧重點（'+approved.length+'）</h5>'+
+     (approved.length?'<div class="temp-brief-grid">'+approved.join('')+'</div>':'<p class="temp-brief-empty">尚無審核通過的照顧重點；待審核內容不會提供給接班者。</p>')+
+     '<p class="temp-brief-warning">資料僅供本次交班查閱；緊急異常請依機構規定直接聯絡居督。本區在聊天室到期、關閉或撤權後停止顯示。</p>';
+   panel.hidden=false;
+ }
+ async function loadCaseBrief(){
+   const room=current(),id=s.roomId,seq=s.seq;
+   if(!room||!open(room)||!participant(room)){clearCaseBrief();return;}
+   const panel=$('tempCaseBrief'),content=$('tempCaseBriefContent');
+   if(panel&&content&&panel.hidden){
+     panel.hidden=false;
+     content.innerHTML='<p class="temp-brief-empty">正在讀取本次交班可查閱的個案資料…</p>';
+   }
+   try{
+     const {data,error}=await s.db.rpc('get_invited_room_case_brief',{p_room_id:id});
+     if(seq!==s.seq||id!==s.roomId)return;
+     if(!open(current())){clearCaseBrief();return;}
+     if(error)throw error;
+     if(!data){clearCaseBrief();return;}
+     renderCaseBrief(data);
+   }catch(e){
+     if(seq!==s.seq||id!==s.roomId)return;
+     clearCaseBrief();
+     if(panel&&content&&open(current())){
+       panel.hidden=false;
+       content.innerHTML='<p class="temp-brief-empty">無法讀取個案資料：'+esc(err(e))+'。請確認交班室仍有效，或聯絡居督。</p>';
+     }
+   }
+ }
  function drawHeader(){
    const r=current();if(!r||!$('tempDetail'))return;
    const active=open(r),canSend=active&&participant(r);
@@ -140,6 +208,7 @@
    $('tempStatus').textContent=roomState(r);
    $('tempTime').textContent=remains(r);
    $('tempClosed').hidden=active;
+   if(!active)clearCaseBrief();
    $('tempChatForm').hidden=!canSend;
    const published=s.published.get(r.id);
    $('tempSummary').hidden=active||!reviewer()||!!published;
@@ -148,10 +217,10 @@
  }
  async function openRoom(id){
    if(!s.rooms.some(x=>x.id===id))return;
-   s.roomId=id;s.messages=[];
+   s.roomId=id;s.messages=[];clearCaseBrief();
    $('tempOverview').hidden=true;$('tempDetail').hidden=false;
    $('tempMessages').innerHTML='<p class="temp-empty">載入訊息中…</p>';
-   drawHeader();await messages();
+   drawHeader();await Promise.all([messages(),loadCaseBrief()]);
  }
  async function messages(){
    const id=s.roomId,seq=s.seq;if(!id)return;
@@ -184,7 +253,7 @@
      }).select('id').single();
      if(error)throw error;
      await rooms();await openRoom(data.id);
-     notify('已建立 48 小時交班室，B 登入後可從「受邀臨時交班」搜尋進入。');
+     notify('已建立 48 小時交班室，受邀 B 可在聊天室查看該案資料與已確認照顧重點。');
    }catch(e){notify('建立失敗：'+err(e),true)}
    finally{s.busy=false;$('tempCreateBtn').disabled=!s.people.length}
  }
@@ -230,7 +299,7 @@
    if(!s.db||!s.root)return;
    try{
      await rooms();if(s.mode==='case')await loadPublished();
-     if(s.roomId){await messages();drawHeader();}
+     if(s.roomId){await Promise.all([messages(),loadCaseBrief()]);drawHeader();}
      if(showNotice)notify('已更新交班室');
    }catch(e){notify('更新失敗：'+err(e),true)}
  }
@@ -256,7 +325,7 @@
      if(r&&$('tempTime')){
        const hadClosed=$('tempClosed').hidden;
        $('tempTime').textContent=remains(r);
-       if(hadClosed!==!open(r))drawHeader();
+       if(hadClosed===!open(r))drawHeader();
      } else if($('tempRoomList'))renderList();
    },1000);
    s.timer=setInterval(()=>{
