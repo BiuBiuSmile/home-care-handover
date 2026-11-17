@@ -204,7 +204,7 @@
      const {data,error}=await s.db.rpc('publish_room_handover_summary',{p_room_id:r.id,p_title:title,p_description:description});
      if(error)throw error;
      await loadPublished();drawHeader();
-     notify('已發佈為此個案最新的正式交班紀錄。');
+     notify('已發佈最新正式交班。若 A、B 雙方皆曾實際留言，系統將各核發 5 點。');
      if(s.onPublished)await s.onPublished(data);
    }catch(e){notify('發佈失敗：'+err(e),true)}
    finally{s.busy=false;if($('tempPublish'))$('tempPublish').disabled=false}
